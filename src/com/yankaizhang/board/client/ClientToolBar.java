@@ -14,6 +14,7 @@ import javax.swing.border.TitledBorder;
 @SuppressWarnings("serial")
 class ClientToolBar extends JPanel implements ActionListener, WindowListener {
 
+	private static final String ICON_PATH = "./src/com/yankaizhang/board/icon/";
 	private final ClientCanvas mainCanvas;
 
 	private ImageIcon[] icons;
@@ -68,7 +69,7 @@ class ClientToolBar extends JPanel implements ActionListener, WindowListener {
 		// 添加按钮图标
 		icons = new ImageIcon[14];
 		for (int i = 0; i < 14; i++) {
-			icons[i] = new ImageIcon("./src/com/yankaizhang/board/icon/" + (i + 1) + ".JPG");
+			icons[i] = new ImageIcon(ICON_PATH + (i + 1) + ".JPG");
 		}
 		jbName.setForeground(Color.red);
 		jbName.setFont(new Font("华文楷体", Font.PLAIN, 20));

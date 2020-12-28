@@ -9,7 +9,7 @@ import javax.swing.border.EmptyBorder;
 /**
  * 服务器端主函数
  */
-@SuppressWarnings("serial")
+@SuppressWarnings("all")
 public class Server extends JFrame {
 
 	private JPanel contentPane = new JPanel();

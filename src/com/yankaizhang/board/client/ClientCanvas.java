@@ -97,7 +97,7 @@ public class ClientCanvas extends JFrame implements ActionListener{
 		fun1.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
-				drawArea.RepaintType(JColorChooser.showDialog(null,"背景色设置",Color.black), null);
+				drawArea.RepaintType(JColorChooser.showDialog(null,"背景色设置", Color.black), null);
 			}
 		});
 		fun2.addMouseListener(new MouseAdapter() {
@@ -235,8 +235,9 @@ public class ClientCanvas extends JFrame implements ActionListener{
 			return;
 		}
 		if (shape.type == 7) {
+			drawArea.getShapes().add(shape.deepClone());
 			drawArea.setBackColor(shape.backColor);
-			repaint();
+			drawArea.repaint();
 			return;
 		}
 		if (shape.type == 999){
@@ -246,7 +247,7 @@ public class ClientCanvas extends JFrame implements ActionListener{
 			return;
 		}
 		drawArea.getShapes().add(shape.deepClone());
-		repaint();
+		drawArea.repaint();
 	}
 
 	/**

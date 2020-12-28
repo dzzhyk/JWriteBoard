@@ -14,7 +14,6 @@ import com.yankaizhang.board.util.Logger;
  */
 public class ClientDrawArea extends JPanel {
 
-	private final Logger log = Logger.getInstance();
 	private final ClientCanvas mainCanvas;
 	private MyShape tempShape = new MyShape();
 
@@ -32,7 +31,7 @@ public class ClientDrawArea extends JPanel {
 		// 使用Graphics2D绘图
 		Graphics2D g2 = (Graphics2D) g;
 		super.paint(g2);
-		this.setBackground(backColor);
+		this.setBackground(this.backColor);
 		for(MyShape temp : shapes) {
 			drawShape(g2, temp);
 		}

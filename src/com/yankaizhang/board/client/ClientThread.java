@@ -67,7 +67,6 @@ public class ClientThread extends Thread {
 				mainCanvas.getDataAndRepaint(shape);
 				log.debug("收到新内容，重新绘制");
 			}catch(ClassNotFoundException | IOException e) {
-				e.printStackTrace();
 				try {
 					if (this.socket != null){
 						this.socket.close();
