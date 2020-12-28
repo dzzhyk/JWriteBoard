@@ -24,10 +24,11 @@ public class MyShape implements Serializable, Cloneable {
 	public String message = null;  //消息
 	public List<String> onlineList = new CopyOnWriteArrayList<>();
 
-
 	public MyShape() {}
 
-
+	/**
+	 * 重置当前图形
+	 */
 	public void reset() {
 		type = -1;
 		shape = null;
@@ -40,7 +41,7 @@ public class MyShape implements Serializable, Cloneable {
 	}
 
 	@Override
-	public Object clone() {
+	public MyShape clone() {
 		MyShape newShape = new MyShape();
 		newShape.shape = this.shape;
 		newShape.type = this.type;

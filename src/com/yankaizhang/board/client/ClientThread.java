@@ -3,28 +3,28 @@ package com.yankaizhang.board.client;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.JOptionPane;
 
 import com.yankaizhang.board.commons.MyShape;
+import com.yankaizhang.board.util.Logger;
 
 /**
  * 客户端线程
  */
-public class ClientThread implements Runnable {
+public class ClientThread extends Thread {
 
+	private final Logger log = Logger.getInstance();
 	Socket socket = null;
-	private CopyOnWriteArrayList<String> onlineList = new CopyOnWriteArrayList<>();
+	public List<String> onlineList = new CopyOnWriteArrayList<>();
 	ObjectOutputStream objOut = null;
 	ObjectInputStream objIn = null;
-
 
 	public ClientThread(InetAddress address, int port) {
 		try {
 			this.socket = new Socket(address, port);
-			ClientDraw.isOnNet = true;
-
 			// 连接之后首先发送用户名
 			PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
 			out.println(ClientDraw.userName);
@@ -32,6 +32,9 @@ public class ClientThread implements Runnable {
 
 			objOut = new ObjectOutputStream(socket.getOutputStream());
 			objIn = new ObjectInputStream(socket.getInputStream());
+
+			ClientDraw.isOnNet = true;
+			log.debug("连接服务器成功 : userName : " + ClientDraw.userName);
 
 		}catch(IOException e) {
 			JOptionPane.showMessageDialog(null, "服务器连接错误", "连接错误", JOptionPane.ERROR_MESSAGE);
@@ -47,15 +50,15 @@ public class ClientThread implements Runnable {
 
 	@Override
 	public void run() {
-		while(true) {
+		while (true) {
 			try {
-				MyShape graphics = (MyShape) objIn.readObject();
-				assert graphics != null;
-				ClientDraw.drawPanel.getDataAndRepaint(graphics);
+				MyShape shape = (MyShape) objIn.readObject();
+				ClientDraw.drawPanel.getDataAndRepaint(shape);
+				log.debug("收到新内容，重新绘制");
 			}catch(ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 				try {
-					socket.close();
+					this.socket.close();
 					break;
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
@@ -65,13 +68,16 @@ public class ClientThread implements Runnable {
 		}
 	}
 
-	// 向客服端发送消息
+
+	/**
+	 * 发送消息
+	 */
 	public void sendClientMsg(Object msg) {
 		try {
 			objOut.writeObject(msg);
+			log.debug("发送内容");
 		}catch(IOException e) {
 			e.printStackTrace();
-
 			try {
 				socket.close();
 			} catch (IOException ioException) {
@@ -81,12 +87,16 @@ public class ClientThread implements Runnable {
 		}
 	}
 
-
-	public void close() throws IOException {
-		objOut.close();
-		objIn.close();
-		socket.close();
+	@Override
+	public void interrupt() {
+		super.interrupt();
+		try {
+			objOut.close();
+			objIn.close();
+			socket.close();
+			log.debug("断开连接成功");
+		}catch (IOException e){
+			e.printStackTrace();
+		}
 	}
-
-
 }

@@ -57,9 +57,11 @@ public class ServerThread implements Runnable {
 			} catch(ClassNotFoundException e) {
 				e.printStackTrace();
 				break;
-			} catch(IOException e) {
+			} catch (EOFException e){
 				ServerAcceptor.showServerMsg("\n [¶Ï¿ªÁ¬½Ó] user: "+ Thread.currentThread().getName() +", ip: " + this.socket.getInetAddress());
 				ServerAcceptor.removeThread(this);
+				break;
+			} catch(Exception e) {
 				e.printStackTrace();
 				break;
 			}

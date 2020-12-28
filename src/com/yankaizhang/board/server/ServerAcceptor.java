@@ -1,5 +1,7 @@
 package com.yankaizhang.board.server;
 
+import com.yankaizhang.board.util.Logger;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.Map;
@@ -11,6 +13,7 @@ import javax.swing.JTextArea;
  */
 public class ServerAcceptor extends Thread {
 
+	private final Logger log = Logger.getInstance();
 	private static ServerSocket serversocket = null;
 	private static JTextArea textArea;
 	private static int port;
@@ -43,6 +46,7 @@ public class ServerAcceptor extends Thread {
 			}
 			assert newSocket != null;
 			executors.submit(new ServerThread(newSocket, textArea));
+			log.debug("新建服务线程");
 		}
 	}
 
@@ -51,6 +55,7 @@ public class ServerAcceptor extends Thread {
 		super.interrupt();
 		threadMap.clear();
 		this.executors.shutdown();
+		log.debug("服务端停止成功");
 	}
 
 	/**
@@ -70,6 +75,7 @@ public class ServerAcceptor extends Thread {
 		for (Map.Entry<String, ServerThread> entry : threadMap.entrySet()) {
 			if (entry.getValue().equals(thread)){
 				threadMap.remove(entry.getKey());
+				System.out.println("移除服务线程 => " + entry.getKey());
 				break;
 			}
 		}
@@ -104,6 +110,7 @@ public class ServerAcceptor extends Thread {
 		port = p;
 		try {
 			serversocket = new ServerSocket(port);
+			log.debug("服务端启动成功 : 端口" + port);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

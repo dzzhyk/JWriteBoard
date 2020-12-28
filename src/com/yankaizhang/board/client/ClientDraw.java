@@ -2,7 +2,6 @@ package com.yankaizhang.board.client;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -14,10 +13,9 @@ public class ClientDraw extends JFrame implements ActionListener{
 
 
 	private JMenuBar bar ;//定义菜单条
-	private JMenu files,options,help;//定义菜单
+	private JMenu menu1, menu2,help;//定义菜单
 	private JMenuItem start,pause,exit;//菜单中的菜单项
 	private JMenuItem fun1,fun2,fun3;//菜单项
-	private JMenuItem aboutp,abouta;//菜单项
 
 	private Point pOld = null; // 绘图的起点
 	private Point pNew = null; // 绘图的终点
@@ -27,6 +25,7 @@ public class ClientDraw extends JFrame implements ActionListener{
 	public static String shapeType = "PEN";// 默认绘图类型为直线
 
 	public static boolean isOnNet = false;// 检测是否联网绘制
+
 	private ClientCanvas optionPanel = null; // 集中各种控件的Jpanel
 	public static ClientDrawMyShape drawPanel = null;// 绘制图形JPanel
 	JPanel jpChat = null; // 聊天Jpanel及其相关组件
@@ -46,35 +45,30 @@ public class ClientDraw extends JFrame implements ActionListener{
 
 		setResizable(false);
 		setTitle("网络白板 - 客户端");
-
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 设置窗口正确关闭
 		setBounds(100, 100, 980, 710);// 设置窗口大小
 		
 		//添加菜单栏
-		bar=new JMenuBar();//初始化控件
-		files=new JMenu("开始(B)");
-		options=new JMenu("选项(O)");
+		bar = new JMenuBar();
+		menu1 = new JMenu("开始");
+		menu2 = new JMenu("选项");
+		bar.add(menu1).add(menu2);
+		start = new JMenuItem("单机模式");
+		start.setEnabled(false);
+		pause = new JMenuItem("联网模式");
+		exit = new JMenuItem("退出");
+		menu1.add(start);
+		menu1.add(pause);
+		menu1.add(exit);
 
-		bar.add(files);
-		bar.add(options);
+		// TODO: 单机模式断开联网
 
-		setJMenuBar(bar);
-		files.setMnemonic('B');//即ALT+“B”，添加菜单快捷键
-		options.setMnemonic('O');
-
-		start=new JMenuItem("单机模式");//文件菜单项目设定
-		pause=new JMenuItem("联网模拟");
-		exit=new JMenuItem("退出");
-		files.add(start);
-		files.add(pause);
 		pause.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
 				optionPanel.showModeJDialog();
 			}
 		});
-
-		files.add(exit);
 		exit.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
@@ -82,24 +76,22 @@ public class ClientDraw extends JFrame implements ActionListener{
 			}
 		});
 
-		start.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,InputEvent.CTRL_MASK));//开始菜单中各项快捷键
-		pause.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,InputEvent.CTRL_MASK));
-		exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,InputEvent.CTRL_MASK));
+
 		start.addActionListener(this);
 		pause.addActionListener(this);
 		exit.addActionListener(this);
 
-		fun1=new JMenuItem("背景色");//选项菜单设定
-		fun2=new JMenuItem("前景色");
-		fun3=new JMenuItem("字体");
-		options.add(fun1);
+		fun1 = new JMenuItem("背景色");
+		fun2 = new JMenuItem("前景色");
+		fun3 = new JMenuItem("字体");
+		menu2.add(fun1);
 		fun1.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
 				drawPanel.Repaint(JColorChooser.showDialog(null,"背景色设置",Color.black), null);//////////////////////////
 			}
 		});
-		options.add(fun2);
+		menu2.add(fun2);
 		fun2.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
@@ -107,88 +99,86 @@ public class ClientDraw extends JFrame implements ActionListener{
 						JColorChooser.showDialog(null, "前景色设置", Color.black));
 			}
 		});
-		options.add(fun3);
+		menu2.add(fun3);
 		fun3.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
 				new Typeface();
 			}
 		});
-
 		fun1.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K,InputEvent.CTRL_MASK));
 		fun2.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,InputEvent.CTRL_MASK));
 		fun3.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,InputEvent.CTRL_MASK));
 		fun1.addActionListener(this);
 		fun2.addActionListener(this);
 		fun3.addActionListener(this);
+		setJMenuBar(bar);
 
-		optionPanel = new ClientCanvas(); // 创建工具Japenl类
-		// 设置工具Japenl类的轮廓标题
-		optionPanel.setBorder(new TitledBorder(UIManager
-				.getBorder("TitledBorder.border"), "--------工具栏-------",
-				TitledBorder.CENTER, TitledBorder.ABOVE_TOP, null, new Color(
-						46, 48, 50)));
-		optionPanel.setBackground(new Color(106,147,176));   // 设置工具Japenl类的背景色
-		getContentPane().add(optionPanel, BorderLayout.NORTH);// 加载工具Japenl类到主窗口顶部
 
-		drawPanel = new ClientDrawMyShape(); // 创建绘图JPanel类实例
-		drawPanel.setBackground(Color.white);// 绘图JPanel类背景色默认设置为白色
+		// 创建工具栏区域
+		optionPanel = new ClientCanvas();
+		optionPanel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "--------工具栏-------", TitledBorder.CENTER, TitledBorder.ABOVE_TOP, null, new Color(46, 48, 50)));
+		optionPanel.setBackground(new Color(106,147,176));
+		getContentPane().add(optionPanel, BorderLayout.NORTH);
 
-		getContentPane().add(drawPanel, BorderLayout.CENTER);// 加载绘图JPanel类到主窗口中间
+		// 创建绘图区域
+		drawPanel = new ClientDrawMyShape();
+		drawPanel.setBackground(Color.white);
+		getContentPane().add(drawPanel, BorderLayout.CENTER);
 
-		// 以下为聊天Jpanel的创建，布局
+		// 创建聊天区域
 		jpChat = new JPanel();
 		jponline = new JPanel();
 		jpMessage = new JPanel();
-		// 发送消息
 		jbSend = new JButton("发送");
 		jbSend.setFont(new Font("宋体", Font.BOLD, 16));
-//		jbSend.setBackground(new Color(135,206,255));
-		jbSend.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String str = jtf.getText().trim();
-				if(str.isEmpty()){    // 如果是空字串或全为空格，则提示不可发送
-					JOptionPane.showMessageDialog(null,"不能发送空消息","提示",JOptionPane.ERROR_MESSAGE);
-					jtf.setText("");    // 如果输入了一串空格，提示后应该清空空格
-				}
-				else{     // 否则可以发送
-					jta.append("我：" + str + "\n");
-					jtf.setText("");
-				}
-				if (isOnNet == true)
-					drawPanel.sendMessage(userName + ":" + str);
+		jbSend.addActionListener(e -> {
+			String str = jtf.getText().trim();
+			if(str.isEmpty()){    // 如果是空字串或全为空格，则提示不可发送
+				JOptionPane.showMessageDialog(null,"不能发送空消息","提示",JOptionPane.ERROR_MESSAGE);
+				jtf.setText("");    // 如果输入了一串空格，提示后应该清空空格
+			}
+			else{     // 否则可以发送
+				jta.append("我：" + str + "\n");
+				jtf.setText("");
+			}
+			if (isOnNet){
+				drawPanel.sendMessage(userName + ":" + str);
 			}
 		});
+
+
 		// 清空聊天框
 		jbClear = new JButton("清空");
 		jbClear.setFont(new Font("宋体", Font.BOLD, 16));
-		jbClear.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				jtf.setText("");
-				jta.setText("");
-			}
+		jbClear.addActionListener(e -> {
+			jtf.setText("");
+			jta.setText("");
 		});
+
+
 		jtf = new JTextField();
 		jtf.setForeground(Color.BLUE);
 		jtf.setFont(new Font("宋体", Font.PLAIN, 16));
-		jtf.addKeyListener(new KeyAdapter() {// 捕获JTextFieldde回车事件
+		jtf.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					String str = jtf.getText().trim();
-					if(str.isEmpty()){    // 如果是空字串或全为空格，则提示不可发送
+					if ("".equals(str)) {
 						JOptionPane.showMessageDialog(null,"不能发送空消息","提示",JOptionPane.ERROR_MESSAGE);
-						jtf.setText("");    // 如果输入了一串空格，提示后应该清空空格
-					}
-					else{
+					} else {
 						jta.append("我：" + str + "\n");
-						jtf.setText("");
 					}
-					if (isOnNet == true)
+					jtf.setText("");
+					if (isOnNet){
 						drawPanel.sendMessage(userName + ":" + str);
+					}
 				}
 			}
 		});
+
+
 		jta = new JTextArea();
 		jta.setEditable(false);    // 设置聊天记录框不可编辑
 		jta.setForeground(Color.blue);
@@ -224,7 +214,6 @@ public class ClientDraw extends JFrame implements ActionListener{
 				.getBorder("TitledBorder.border"), "聊天窗口：",
 				TitledBorder.CENTER, TitledBorder.BELOW_BOTTOM, null,
 				Color.black));
-		//jponline.setPreferredSize(new Dimension(200, 180));// 将人员显示框添加至JPanel
 		jponline.add(jscro,BorderLayout.CENTER);
 
 		jpChat = new JPanel();
@@ -249,6 +238,7 @@ public class ClientDraw extends JFrame implements ActionListener{
 			}
 		});
 
+
 		// 以下为监听鼠标的事件，包括按下，移动，释放
 		pTempOld = new Point(0, 0);// 初始化辅助绘图点
 		drawPanel.addMouseListener(new MouseAdapter() {
@@ -260,29 +250,19 @@ public class ClientDraw extends JFrame implements ActionListener{
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				pNew = e.getPoint();
-				try {
-					pTempOld.x = pOld.x;
-					pTempOld.y = pOld.y;
-					drawPanel.drawShape(shapeType, pTempOld, pNew, true);
-				} catch (ClassNotFoundException | IOException e1) {
-					e1.printStackTrace();
-				}
+				pTempOld.x = pOld.x;
+				pTempOld.y = pOld.y;
+				drawPanel.drawShape(shapeType, pTempOld, pNew, true);
 			}
 		});
 
 		drawPanel.addMouseMotionListener(new MouseMotionAdapter() {
 			@Override
-			// 鼠标移动事件
 			public void mouseDragged(MouseEvent e) {
 				pTemp = e.getPoint();
-				try {
-					pTempOld.x = pOld.x;
-					pTempOld.y = pOld.y;
-					drawPanel.drawShape(shapeType,
-							(Point) pTempOld.clone(), pTemp, false);
-				} catch (ClassNotFoundException | IOException e1) {
-					e1.printStackTrace();
-				}
+				pTempOld.x = pOld.x;
+				pTempOld.y = pOld.y;
+				drawPanel.drawShape(shapeType, (Point) pTempOld.clone(), pTemp, false);
 			}
 		});
 	}

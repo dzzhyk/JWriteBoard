@@ -43,7 +43,6 @@ class ClientCanvas extends JPanel implements ActionListener, WindowListener {
 	JButton btnSprayPen = new JButton("H");	//"喷枪"
 
 	JButton btnConnect = new JButton("连接");	//连接
-	JButton btnDisconnect = new JButton("断开");	//断开连接
 	JButton btnLocal = new JButton("M");			//"本机绘图"
 	JButton btnNet = new JButton("N");				//"网络绘图"
 
@@ -114,7 +113,6 @@ class ClientCanvas extends JPanel implements ActionListener, WindowListener {
 		btnSprayPen.setToolTipText(tiptext[8]);
 		btnSprayPen.setBackground(new Color(240,240,180));
 		btnConnect.addActionListener(this);
-		btnDisconnect.addActionListener(this);
 		btnLocal.addActionListener(this);
 		btnLocal.setIcon(icons[13]);
 		btnLocal.setToolTipText(tiptext[0]);
@@ -227,61 +225,52 @@ class ClientCanvas extends JPanel implements ActionListener, WindowListener {
 	// 处理各个按钮的点击事件
 	public void actionPerformed(final ActionEvent e) {
 		switch (e.getActionCommand()) {
-		case "断开"://断开连接
-			canConnect(false);
-			jd.dispose();
-			break;
-		case "连接"://连接
-			canConnect(true);
-			jd.dispose();
-			break;
-		case "A"://"直线"
-			ClientDraw.shapeType = "LINE";
-			break;
-		case "G"://文字
-			ClientDraw.shapeType = "TEXT";
-			break;
-		case "D"://椭圆
-			ClientDraw.shapeType = "ECLI";
-			break;
-		case "B"://矩形
-			ClientDraw.shapeType = "RECT";
-			break;
-		case "I"://圆角矩形
-			ClientDraw.shapeType = "RRECT";
-			break;
-		case "E"://橡皮擦
-			ClientDraw.shapeType = "EARSER";
-			break;
-
-		case "C"://正方形
-			ClientDraw.shapeType = "DIAMOND";
-			break;
-		case "F"://钢笔
-			ClientDraw.shapeType = "PEN";
-			break;
-		case "H"://喷枪
-			ClientDraw.shapeType = "SPEN";
-			break;
-		case "N"://网络绘图
-			showModeJDialog();
-			break;
-		case "本机绘图":
-			break;
-		case "J"://背景颜色
-			ClientDraw.drawPanel
-					.Repaint(JColorChooser.showDialog(this, "背景色设置",Color.black), null);
-			break;
-		case "K"://前景颜色
-			ClientDraw.drawPanel.Repaint(null,
-					JColorChooser.showDialog(this, "前景色设置", Color.black));
-			break;
-		case "L"://字体
-			new Typeface();
-			break;
-		default:
-			ClientDraw.shapeType = "PEN";
-			break;
+			case "连接"://连接
+				canConnect(true);
+				jd.dispose();
+				break;
+			case "A"://"直线"
+				ClientDraw.shapeType = "LINE";
+				break;
+			case "G"://文字
+				ClientDraw.shapeType = "TEXT";
+				break;
+			case "D"://椭圆
+				ClientDraw.shapeType = "ECLI";
+				break;
+			case "B"://矩形
+				ClientDraw.shapeType = "RECT";
+				break;
+			case "I"://圆角矩形
+				ClientDraw.shapeType = "RRECT";
+				break;
+			case "E"://橡皮擦
+				ClientDraw.shapeType = "EARSER";
+				break;
+			case "C"://正方形
+				ClientDraw.shapeType = "DIAMOND";
+				break;
+			case "F"://钢笔
+				ClientDraw.shapeType = "PEN";
+				break;
+			case "H"://喷枪
+				ClientDraw.shapeType = "SPEN";
+				break;
+			case "N"://网络绘图
+				showModeJDialog();
+				break;
+			case "J"://背景颜色
+				ClientDraw.drawPanel
+						.Repaint(JColorChooser.showDialog(this, "背景色设置",Color.black), null);
+				break;
+			case "K"://前景颜色
+				ClientDraw.drawPanel.Repaint(null,
+						JColorChooser.showDialog(this, "前景色设置", Color.black));
+				break;
+			case "L"://字体
+				new Typeface();
+				break;
+			default: break;
 		}
 	}
 
@@ -299,7 +288,6 @@ class ClientCanvas extends JPanel implements ActionListener, WindowListener {
 		jd.add(jtfPort);
 		jd.add(jbIP);
 		jd.add(jtfIP);
-		jd.add(btnDisconnect);
 		jd.add(btnConnect);
 		jd.setVisible(true);
 		jd.setBackground(Color.cyan);
@@ -318,35 +306,24 @@ class ClientCanvas extends JPanel implements ActionListener, WindowListener {
 	// 确认联网
 	public void canConnect(final boolean just) {
 		if (!just) {
-			try {
-				ClientDraw.drawPanel.connect(null, -1, just);
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
+			ClientDraw.drawPanel.connect(null, -1, just);
 			return;
 		}
 		ClientDraw.userName = jtfName.getText().trim();
 		final String portstr = jtfPort.getText().trim();
 		final String IPstr = jtfIP.getText().trim(); // 得到IP，端口号
 		final int port = Integer.parseInt(portstr);
-		boolean temp = false;
 		InetAddress address = null;
 		try {
 			address = InetAddress.getByName(IPstr);
-		} catch (final UnknownHostException e1) {
-			temp = true;
-			JOptionPane.showMessageDialog(null, "您输入的IP有误，请重新输入!", "IP错误",
-					JOptionPane.ERROR_MESSAGE);
-			e1.printStackTrace();
+		} catch (UnknownHostException e1) {
+			JOptionPane.showMessageDialog(null, "您输入的IP有误，请重新输入!", "IP错误", JOptionPane.ERROR_MESSAGE);
+			return;
 		}
-		if (!temp)
-			try {
-				ClientDraw.drawPanel.connect(address, port, just);
-				ClientDraw.isOnNet = true;
-				ClientDraw.drawPanel.sendMessage(ClientDraw.userName + "已上线!");
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
+		assert address != null;
+		ClientDraw.drawPanel.connect(address, port, just);
+		ClientDraw.isOnNet = true;
+		ClientDraw.drawPanel.sendMessage(ClientDraw.userName + "已上线!");
 	}
 
 	@Override
