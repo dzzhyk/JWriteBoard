@@ -7,14 +7,13 @@ import javax.swing.border.EmptyBorder;
 
 
 /**
- * ·şÎñÆ÷¶ËÖ÷º¯Êı
+ * æœåŠ¡å™¨ç«¯ä¸»å‡½æ•°
  */
-
 @SuppressWarnings("serial")
 public class Server extends JFrame {
 
 	private JPanel contentPane = new JPanel();
-	ServerCanvas panel = null;
+	ServerCanvas panel;
 
 	public static void main(String[] args) {
 		try {
@@ -26,30 +25,29 @@ public class Server extends JFrame {
 		}
 	}
 
-
 	public Server() {
-		setTitle("ÍøÂç°×°å - ·şÎñ¶Ë");
+		setTitle("ç½‘ç»œç™½æ¿ - æœåŠ¡ç«¯");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 400, 300);
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
 		setContentPane(contentPane);
 
-		// ´´½¨JTextArea
+		// åˆ›å»ºJTextArea
 		JTextArea txtrn = new JTextArea();
 		txtrn.setEditable(false);
-		txtrn.setText("Server ÈÕÖ¾:");
+		txtrn.setText("Server æ—¥å¿—:");
 		txtrn.setToolTipText("");
 		txtrn.setForeground(Color.pink);
 		txtrn.setBackground(Color.WHITE);
-		txtrn.setFont(new Font("Î¢ÈíÑÅºÚ", Font.PLAIN, 16));
+		txtrn.setFont(new Font("å¾®è½¯é›…é»‘", Font.PLAIN, 16));
 
 		JScrollPane scroll = new JScrollPane(txtrn);
 		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		txtrn.setLineWrap(true);
 
-		// Éú³ÉÖ÷ÄÚÈİ
+		// ç”Ÿæˆä¸»å†…å®¹
 		panel = new ServerCanvas(txtrn);
 		panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 

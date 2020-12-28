@@ -6,63 +6,70 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.yankaizhang.board.client.ClientDraw;
+import com.yankaizhang.board.client.ClientCanvas;
 
 
 /**
- * Ñ¡ÔñÑùÊ½ÀàĞÍ
+ * è®¾ç½®ç”»æ¿çš„æ ·å¼ç±»å‹
  */
-public class Typeface implements ActionListener {
-	final JDialog fontDialog = new JDialog(); // ×ÖÌåÑ¡Ôñ¶Ô»°¿ò
-	final JTextField tfFont = new JTextField(11); // ×ÖÌå·ç¸ñ
-	final JTextField tfSize = new JTextField(6); // ×ÖÌå´óĞ¡
-	final JTextField tfStyle = new JTextField(10); // ×ÖÌåĞÎÊ½
-	// ×ÖÌåĞÎÊ½³£Á¿
-	final int fontStyleConst[] = {Font.PLAIN, Font.BOLD, Font.ITALIC,
-			Font.BOLD + Font.ITALIC};
-	@SuppressWarnings("rawtypes")
-	final JList listStyle; // Ñ¡Ôñ×ÖÌåĞÎÊ½µÄÁĞ±í
-	@SuppressWarnings("rawtypes")
-	final JList listFont; // Ñ¡Ôñ×ÖÌå·ç¸ñµÄÁĞ±í
-	@SuppressWarnings("rawtypes")
-	final JList listSize; // Ñ¡Ôñ×ÖÌåĞÍºÅµÄÁĞ±í
-	private JLabel sample; // Ê¾Àı
-	private JButton fontOkButton = new JButton("È·¶¨"); // ×ÖÌåÉèÖÃÀïµÄ"È·¶¨"°´Å¥
+@SuppressWarnings("all")
+public class TypeCanvas implements ActionListener {
 
-	// ÉèÖÃ×ÖÌå·ç¸ñ£¬´óĞ¡½«ÆäÌí¼Óµ½Ãæ°åÖĞ.
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public Typeface() {
-		// ³õÊ¼»¯Ãæ°å
+	private final ClientCanvas mainCanvas;
+	private final JDialog fontDialog = new JDialog(); // å­—ä½“é€‰æ‹©å¯¹è¯æ¡†
+	private final JTextField tfFont = new JTextField(11); // å­—ä½“é£æ ¼
+	private final JTextField tfSize = new JTextField(6); // å­—ä½“å¤§å°
+	private final JTextField tfStyle = new JTextField(10); // å­—ä½“å½¢å¼
+
+	// å­—ä½“å½¢å¼å¸¸é‡
+	private final int fontStyleConst[] = {Font.PLAIN, Font.BOLD, Font.ITALIC, Font.BOLD + Font.ITALIC};
+
+	private JList listStyle;
+	private JList listFont;
+	private JList listSize;
+	private JLabel sample;
+	private JButton fontOkButton = new JButton("ç¡®å®š");
+
+
+	public TypeCanvas(ClientCanvas canvas) {
+		this.mainCanvas = canvas;
+		initTypeCanvas();
+	}
+
+
+	private void initTypeCanvas() {
+
+		// åˆå§‹åŒ–é¢æ¿
 		Container container = fontDialog.getContentPane();
 		container.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-		Font currentFont = container.getFont();// »ñÈ¡µ±Ç°µÄ×ÖÌå¸ñÊ½
+		Font currentFont = container.getFont();// è·å–å½“å‰çš„å­—ä½“æ ¼å¼
 
-		JLabel lblFont = new JLabel("×ÖÌå(F):");
+		JLabel lblFont = new JLabel("å­—ä½“(F):");
 		lblFont.setPreferredSize(new Dimension(100, 20));
-		JLabel lblStyle = new JLabel("×ÖĞÎ(Y):");
+		JLabel lblStyle = new JLabel("å­—å½¢(Y):");
 		lblStyle.setPreferredSize(new Dimension(100, 20));
-		JLabel lblSize = new JLabel("´óĞ¡(S):");
+		JLabel lblSize = new JLabel("å¤§å°(S):");
 		lblSize.setPreferredSize(new Dimension(100, 20));
 
-		// ×ÖÌåÃû³Æ
+		// å­—ä½“åç§°
 		tfFont.setText(currentFont.getFontName());
 		tfFont.selectAll();
 		tfFont.setPreferredSize(new Dimension(200, 20));
 
-		// ÉèÖÃ×ÖÌå·ç¸ñ
+		// è®¾ç½®å­—ä½“é£æ ¼
 		if(currentFont.getStyle() == Font.PLAIN)
-			tfStyle.setText("³£¹æ");
+			tfStyle.setText("å¸¸è§„");
 		else if(currentFont.getStyle() == Font.BOLD)
-			tfStyle.setText("´ÖÌå");
+			tfStyle.setText("ç²—ä½“");
 		else if(currentFont.getStyle() == Font.ITALIC)
-			tfStyle.setText("Ğ±Ìå");
+			tfStyle.setText("æ–œä½“");
 		else if(currentFont.getStyle() == (Font.BOLD + Font.ITALIC))
-			tfStyle.setText("´ÖĞ±Ìå");
+			tfStyle.setText("ç²—æ–œä½“");
 
 		tfStyle.setPreferredSize(new Dimension(200, 20));
 
-		// ×ÖÌå´óĞ¡
+		// å­—ä½“å¤§å°
 		tfSize.setText(currentFont.getSize() + "");
 		tfSize.setPreferredSize(new Dimension(200, 20));
 
@@ -91,7 +98,7 @@ public class Typeface implements ActionListener {
 			}
 		});
 
-		final String fontStyle[] = {"³£¹æ", "´ÖÌå", "Ğ±Ìå", "´ÖĞ±Ìå"};
+		final String fontStyle[] = {"å¸¸è§„", "ç²—ä½“", "æ–œä½“", "ç²—æ–œä½“"};
 		listStyle = new JList(fontStyle);
 		listStyle.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		if(currentFont.getStyle() == Font.PLAIN)
@@ -143,24 +150,24 @@ public class Typeface implements ActionListener {
 		});
 
 		fontOkButton.addActionListener(this);
-		fontOkButton.setFont(new Font("ËÎÌå", Font.BOLD, 11));
-		JButton cancelButton = new JButton("È¡Ïû");
-		cancelButton.setFont(new Font("ËÎÌå", Font.BOLD, 11));
+		fontOkButton.setFont(new Font("å®‹ä½“", Font.BOLD, 11));
+		JButton cancelButton = new JButton("å–æ¶ˆ");
+		cancelButton.setFont(new Font("å®‹ä½“", Font.BOLD, 11));
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				fontDialog.dispose();
 			}
 		});
 
-		sample = new JLabel("hello world, ÊÀ½ç£¬ÄãºÃ£¡");
+		sample = new JLabel("hello world, ä¸–ç•Œï¼Œä½ å¥½ï¼");
 		sample.setHorizontalAlignment(SwingConstants.CENTER);
 		sample.setPreferredSize(new Dimension(300, 50));
 
 		JPanel samplePanel = new JPanel();
-		samplePanel.setBorder(BorderFactory.createTitledBorder("Ê¾Àı"));
+		samplePanel.setBorder(BorderFactory.createTitledBorder("ç¤ºä¾‹"));
 		samplePanel.add(sample);
 
-		// Ìí¼Ó×é½¨µ½Ãæ°å
+		// æ·»åŠ ç»„å»ºåˆ°é¢æ¿
 		container.add(lblFont);
 		container.add(lblStyle);
 		container.add(lblSize);
@@ -174,30 +181,29 @@ public class Typeface implements ActionListener {
 		container.add(cancelButton);
 		container.add(samplePanel);
 
-		// ¸üĞÂÊ¾ÀıÎÄ×Ö
+		// æ›´æ–°ç¤ºä¾‹æ–‡å­—
 		updateSample();
 		fontDialog.setSize(350, 340);
 		fontDialog.setLocation(200, 200);
 		fontDialog.setResizable(false);
 		fontDialog.setVisible(true);
+	}
 
-	}// ¹¹Ôìº¯Êı½áÊø
 
-	// ¸üĞÂÊ¾ÀıÏÔÊ¾µÄ×ÖÌåºÍ·ç¸ñ´óĞ¡.
+	// æ›´æ–°ç¤ºä¾‹æ˜¾ç¤ºçš„å­—ä½“å’Œé£æ ¼å¤§å°.
 	public void updateSample() {
-		Font sampleFont = new Font(tfFont.getText(),
-				fontStyleConst[listStyle.getSelectedIndex()],
-				Integer.parseInt(tfSize.getText()));
+		Font sampleFont =
+				new Font(tfFont.getText(), fontStyleConst[listStyle.getSelectedIndex()], Integer.parseInt(tfSize.getText()));
 		sample.setFont(sampleFont);
 	}
 
-	// ÉèÖÃÎÄ×ÖµÄ×ÖÌå.
+
+	@Override
 	public void actionPerformed(ActionEvent e) {
-		// °´È·ÈÏÊ±ÉèÖÃ×ÖÌå
+		// æŒ‰ç¡®è®¤æ—¶è®¾ç½®å­—ä½“
 		if(e.getSource() == fontOkButton) {
-			ClientDraw.drawPanel.tempShape.font = new Font(tfFont.getText(),
-					fontStyleConst[listStyle.getSelectedIndex()],
-					Integer.parseInt(tfSize.getText()));
+			mainCanvas.getDrawArea().getTempShape().font =
+					new Font(tfFont.getText(), fontStyleConst[listStyle.getSelectedIndex()], Integer.parseInt(tfSize.getText()));
 			fontDialog.dispose();
 		}
 	}

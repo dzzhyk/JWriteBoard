@@ -6,28 +6,28 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Í¼ĞÎÀà
+ * å›¾å½¢ç±»
  */
 public class MyShape implements Serializable, Cloneable {
 
-	public int type = -1; // Í¼ĞÎµÄÀàĞÍ
-	public Shape shape = null; // ±íÊ¾ÍÖÔ²£¬Ïß¶Î£¬¾ØĞÎµÈÒ»ÀàÍ¼ĞÎ
-	public Color fontColor = Color.black; // Ç°¾°É«
-	public Color backColor = Color.white; // ±³¾°É«
-	public Font font = null; // ×ÖÌå¸ñÊ½
-	public List<Point> pointList = new CopyOnWriteArrayList<>(); // ±íÊ¾ÓÉµãÕó¹¹³ÉµÄÍ¼ĞÎµÄµã£¬Èç »­±Ê
-	public Point pointOld = null; // »æÖÆÁâĞÎºÍÏÔÊ¾×Ö·û´®Ê¹ÓÃ
-	public Point pointNew = null; // »æÖÆÁâĞÎºÍÏÔÊ¾×Ö·û´®Ê¹ÓÃ
-	public String text = null; // ËùÒªÏÔÊ¾µÄ×Ö·û´®
-	public int penLength = 15; // »­±Ê¿í´ø
-	public int eraserLength = 20; // ÏğÆ¤¿í¶È
-	public String message = null;  //ÏûÏ¢
+	public int type = -1; // å›¾å½¢çš„ç±»å‹
+	public Shape shape = null; // è¡¨ç¤ºæ¤­åœ†ï¼Œçº¿æ®µï¼ŒçŸ©å½¢ç­‰ä¸€ç±»å›¾å½¢
+	public Color fontColor = Color.black; // å‰æ™¯è‰²
+	public Color backColor = Color.white; // èƒŒæ™¯è‰²
+	public Font font = null; // å­—ä½“æ ¼å¼
+	public List<Point> pointList = new CopyOnWriteArrayList<>(); // è¡¨ç¤ºç”±ç‚¹é˜µæ„æˆçš„å›¾å½¢çš„ç‚¹ï¼Œå¦‚ ç”»ç¬”
+	public Point pointOld = null; // ç»˜åˆ¶è±å½¢å’Œæ˜¾ç¤ºå­—ç¬¦ä¸²ä½¿ç”¨
+	public Point pointNew = null; // ç»˜åˆ¶è±å½¢å’Œæ˜¾ç¤ºå­—ç¬¦ä¸²ä½¿ç”¨
+	public String text = null; // æ‰€è¦æ˜¾ç¤ºçš„å­—ç¬¦ä¸²
+	public int penLength = 5; // ç”»ç¬”å®½å¸¦
+	public int eraserLength = 30; // æ©¡çš®å®½åº¦
+	public String message = null;  //æ¶ˆæ¯
 	public List<String> onlineList = new CopyOnWriteArrayList<>();
 
 	public MyShape() {}
 
 	/**
-	 * ÖØÖÃµ±Ç°Í¼ĞÎ
+	 * é‡ç½®å½“å‰å›¾å½¢
 	 */
 	public void reset() {
 		type = -1;
@@ -40,21 +40,21 @@ public class MyShape implements Serializable, Cloneable {
 		onlineList.clear();
 	}
 
-	@Override
-	public MyShape clone() {
+	public MyShape deepClone() {
 		MyShape newShape = new MyShape();
 		newShape.shape = this.shape;
 		newShape.type = this.type;
 		newShape.backColor = this.backColor;
 		newShape.fontColor = this.fontColor;
 		newShape.font = this.font;
-		newShape.pointList = this.pointList;
+		newShape.pointList = new CopyOnWriteArrayList<>(this.pointList);
 		newShape.text = this.text;
 		newShape.pointOld = this.pointOld;
 		newShape.pointNew = this.pointNew;
 		newShape.penLength = this.penLength;
 		newShape.eraserLength = this.eraserLength;
 		newShape.message = this.message;
+		newShape.onlineList = new CopyOnWriteArrayList<>(this.onlineList);
 		return newShape;
 	}
 }

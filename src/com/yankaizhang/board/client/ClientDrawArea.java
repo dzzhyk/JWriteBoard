@@ -2,7 +2,6 @@ package com.yankaizhang.board.client;
 
 import java.awt.*;
 import java.awt.geom.*;
-import java.net.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.*;
 
@@ -10,45 +9,49 @@ import com.yankaizhang.board.commons.MyShape;
 import com.yankaizhang.board.util.Logger;
 
 
-public class ClientDrawMyShape extends JPanel {
+/**
+ * å®¢æˆ·ç«¯ç»˜å›¾åŒºåŸŸ
+ */
+public class ClientDrawArea extends JPanel {
 
 	private final Logger log = Logger.getInstance();
-	CopyOnWriteArrayList<MyShape> shapes;	// µ±Ç°ËùÓĞÍ¼ĞÎ
-	public MyShape tempShape;				// ÁÙÊ±Í¼ĞÎ
-	ClientThread clientData = null;			// ¿Í»§¶ËÏß³Ì
-	public static Color backColor = Color.white;
+	private final ClientCanvas mainCanvas;
+	private MyShape tempShape = new MyShape();
+
+	private CopyOnWriteArrayList<MyShape> shapes = new CopyOnWriteArrayList<>();
+	private Color backColor = Color.white;
 
 
-	public ClientDrawMyShape() {
-		shapes = new CopyOnWriteArrayList<>();
-		tempShape = new MyShape();
+	public ClientDrawArea(ClientCanvas canvas) {
+		this.mainCanvas = canvas;
 	}
 
 
 	@Override
 	public void paint(Graphics g) {
-		// Ê¹ÓÃGraphics2D»æÍ¼
+		// ä½¿ç”¨Graphics2Dç»˜å›¾
 		Graphics2D g2 = (Graphics2D) g;
 		super.paint(g2);
 		this.setBackground(backColor);
 		for(MyShape temp : shapes) {
-			drawShape(g2, temp.clone());
+			drawShape(g2, temp);
 		}
 
-		// ÏÔÊ¾µ±Ç°ÕıÔÚ»æÖÆµÄ
+		// æ˜¾ç¤ºå½“å‰æ­£åœ¨ç»˜åˆ¶çš„
 		if(tempShape.type != -1){
 			drawShape(g2, tempShape);
 		}
 	}
 
 	/**
-	 * »æÖÆÍ¼ĞÎ
+	 * ç»˜åˆ¶å›¾å½¢
 	 */
-	public void drawShape(Graphics2D g2, MyShape shape) {
-		g2.setColor(shape.fontColor);// ÉèÖÃÇ°¾°É«
-		g2.setStroke(new BasicStroke(shape.penLength)); // ÉèÖÃ»­±Ê¿í¶È
-		g2.setFont(shape.font);// ÉèÖÃ×ÖÌå
+	private void drawShape(Graphics2D g2, MyShape shape) {
+		g2.setColor(shape.fontColor);
+		g2.setStroke(new BasicStroke(shape.penLength));
+		g2.setFont(shape.font);
 		int[][] points = null;
+
 		if(shape.pointList.size() > 1) {
 			points = new int[2][shape.pointList.size()];
 			for(int i1 = 0; i1 < shape.pointList.size(); i1++) {
@@ -56,18 +59,20 @@ public class ClientDrawMyShape extends JPanel {
 				points[1][i1] = shape.pointList.get(i1).y;
 			}
 		}
-		// ¸ù¾İ¾ßÌåÀàËÆ£¬»æÖÆÍ¼ĞÎ
+
+		// æ ¹æ®å…·ä½“ç±»å‹ç»˜åˆ¶å›¾å½¢
 		switch(shape.type) {
-			case 0: // »æÖÆ±ê×¼µÄÍ¼ĞÎ£¬ÈçÏß¶Î£¬¾ØĞÎ£¬Ô²½Ç¾ØĞÎ£¬ÍÖÔ²
+			// ç»˜åˆ¶æ ‡å‡†å›¾å½¢
+			case 0:
 				g2.draw(shape.shape);
 				break;
-
-			case 1:// ÊµÏÖ»­±Ê£¬¼´Ò»ÏµÁĞµãÕó
-				if(shape.pointList.size() > 1)
+			// ç”»ç¬”
+			case 1:
+				if (shape.pointList.size() > 1)
 					g2.drawPolyline(points[0], points[1], shape.pointList.size());
 				break;
-
-			case 2:// ÊµÏÖÅçÇ¹£¬¼´Ò»ÏµÁĞµãÕó
+			// å–·æª
+			case 2:
 				if(shape.pointList.size() > 1) {
 					for(int i = 0; i < shape.pointList.size(); i++) {
 						points[0][i] = (int) (points[0][i] + Math.pow(-1, i) * 3 * Math.sin(Math.PI * (100 * i - 180) / 180));
@@ -78,8 +83,8 @@ public class ClientDrawMyShape extends JPanel {
 					}
 				}
 				break;
-
-			case 3:// ÊµÏÖÏğÆ¤£¬Ò²ÊÇµãÕó£¬µ«ÑÕÉ«Îª±³¾°É«
+			// æ©¡çš®æ“¦
+			case 3:
 				if(shape.pointList.size() > 1) {
 					Color old = g2.getColor();
 					g2.setColor(backColor);
@@ -89,8 +94,8 @@ public class ClientDrawMyShape extends JPanel {
 					g2.setColor(old);
 				}
 				break;
-
-			case 4: // »æÖÆÁâĞÎ
+			// è±å½¢
+			case 4:
 				int x = Math.min(shape.pointOld.x, shape.pointNew.x), y = Math.min(shape.pointOld.y, shape.pointNew.y);
 				int weight = Math.abs(shape.pointOld.x - shape.pointNew.x), height = Math.abs(shape.pointOld.y - shape.pointNew.y);
 				int[] xx = new int[4];
@@ -105,70 +110,85 @@ public class ClientDrawMyShape extends JPanel {
 				yy[3] = y + height / 2;
 				g2.drawPolygon(xx, yy, 4);
 				break;
-
-			case 5:// »æÖÆ×Ö·û´®
+			// ç»˜åˆ¶å­—ç¬¦ä¸²
+			case 5:
 				g2.drawString(shape.text, shape.pointOld.x, shape.pointOld.y);
+				break;
+			// æ¸…å±
+			case 999:
+				g2.fillRect(0, 0, this.getWidth(), this.getHeight());
 				break;
 		}
 	}
 
 
 	/**
-	 * ¸ù¾İÖ÷´°¿ÚÖĞ´«µİµÄÍ¼ĞÎÀàĞÍÒÔ¼°µã£¬¹¹ÔìÏàÓ¦µÄÍ¼ĞÎ
+	 * æ ¹æ®ä¸»çª—å£ä¸­ä¼ é€’çš„å›¾å½¢ç±»å‹ä»¥åŠç‚¹ï¼Œæ„é€ ç›¸åº”çš„å›¾å½¢
 	 */
 	public void drawShape(String shapeType, Point pOld, Point pNew, boolean isFinish) {
 		switch(shapeType) {
-			case "LINE":// Í¼ĞÎÎªÖ±Ïß
+			case "LINE":// å›¾å½¢ä¸ºç›´çº¿
 				tempShape.shape = new Line2D.Double(pOld, pNew);
 				tempShape.type = 0;
 				break;
-			case "RECT":// Í¼ĞÎÎª¾ØĞÎ
+			case "RECT":// å›¾å½¢ä¸ºçŸ©å½¢
 				tempShape.shape = new Rectangle2D.Double(Math.min(pOld.x, pNew.x), Math.min(pOld.y, pNew.y), Math.abs(pOld.x - pNew.x), Math.abs(pOld.y - pNew.y));
 				tempShape.type = 0;
 				break;
-			case "ECLI":// Í¼ĞÎÎªÍÖÔ²
+			case "ECLI":// å›¾å½¢ä¸ºæ¤­åœ†
 				tempShape.shape = new Ellipse2D.Double(Math.min(pOld.x, pNew.x), Math.min(pOld.y, pNew.y), Math.abs(pOld.x - pNew.x), Math.abs(pOld.y - pNew.y));
 				tempShape.type = 0;
 				break;
-			case "RRECT":// Í¼ĞÎÎªÔ²½Ç¾ØĞÎ
+			case "RRECT":// å›¾å½¢ä¸ºåœ†è§’çŸ©å½¢
 				tempShape.shape = new RoundRectangle2D.Double(Math.min(pOld.x, pNew.x), Math.min(pOld.y, pNew.y), Math.abs(pOld.x - pNew.x), Math.abs(pOld.y - pNew.y), 45, 45);
 				tempShape.type = 0;
 				break;
-			case "PEN":// Í¼ĞÎÎª»­±Ê£¬ÒªÊµÏÖµãÕó
+			case "PEN":// å›¾å½¢ä¸ºç”»ç¬”ï¼Œè¦å®ç°ç‚¹é˜µ
 				tempShape.pointList.add(pNew);
 				tempShape.type = 1;
 				break;
-			case "SPEN":// Í¼ĞÎÎªÅçÇ¹£¬ÒªÊµÏÖµãÕó
+			case "SPEN":// å›¾å½¢ä¸ºå–·æªï¼Œè¦å®ç°ç‚¹é˜µ
 				tempShape.pointList.add(pNew);
 				tempShape.type = 2;
 				break;
-			case "EARSER":// Í¼ĞÎÎªÏğÆ¤²Á£¬ÒªÊµÏÖµãÕó
+			case "EARSER":// å›¾å½¢ä¸ºæ©¡çš®æ“¦ï¼Œè¦å®ç°ç‚¹é˜µ
 				tempShape.pointList.add(pNew);
 				tempShape.type = 3;
 				break;
-			case "DIAMOND":// Í¼ĞÎÎªÁâĞÎ£¬ÒªÊµÏÖÆğµãºÍÖÕµã
+			case "DIAMOND":// å›¾å½¢ä¸ºè±å½¢ï¼Œè¦å®ç°èµ·ç‚¹å’Œç»ˆç‚¹
 				tempShape.pointOld = (Point) pOld.clone();
 				tempShape.pointNew = (Point) pNew.clone();
 				tempShape.type = 4;
 				break;
-			case "TEXT":// Í¼ĞÎÎª×Ö·û´®£¬ÒªÊµÏÖÆğµã
-				// ÈôÓÃ»§ÎóµãÊäÈëÎÄ×Ö£¬Ğè¶Ô¿ÕÊäÈë½øĞĞ´¦Àí
-				tempShape.text = JOptionPane.showInputDialog("ÇëÊäÈëÎÄ×Ö£º", "Ìí¼ÓÎÄ×Ö");
+			case "TEXT":// å›¾å½¢ä¸ºå­—ç¬¦ä¸²ï¼Œè¦å®ç°èµ·ç‚¹
+				// è‹¥ç”¨æˆ·è¯¯ç‚¹è¾“å…¥æ–‡å­—ï¼Œéœ€å¯¹ç©ºè¾“å…¥è¿›è¡Œå¤„ç†
+				tempShape.text = JOptionPane.showInputDialog("è¯·è¾“å…¥æ–‡å­—ï¼š", "æ·»åŠ æ–‡å­—");
 				if(tempShape.text == null || "".equals(tempShape.text.trim())){
-					JOptionPane.showMessageDialog(null, "ÇëÊäÈëÎÄ×Ö","ÌáÊ¾ĞÅÏ¢", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(null, "è¯·è¾“å…¥æ–‡å­—","æç¤ºä¿¡æ¯", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
 				tempShape.pointOld = (Point) pOld.clone();
 				tempShape.type = 5;
 				break;
+			case "CLS":	// æ¸…å±
+				tempShape.type = 999;
+				break;
 		}
 
-		// Èç¹û»æÍ¼Íê³É£¬´¢´æÍ¼ĞÎ²¢Ïò·şÎñÆ÷·¢ËÍ
-		MyShape cloneShape = tempShape.clone();
-		if (isFinish && tempShape.type >= 0 && tempShape.type <= 4 || tempShape.type == 5) {
+		// å¦‚æœç»˜å›¾å®Œæˆï¼Œå‚¨å­˜å›¾å½¢å¹¶å‘æœåŠ¡å™¨å‘é€
+		MyShape cloneShape = tempShape.deepClone();
+		if (isFinish && tempShape.type <= 4 && tempShape.type >= 0 || tempShape.type == 5) {
 			shapes.add(cloneShape);
-			if (ClientDraw.isOnNet) {
-				clientData.sendClientMsg(cloneShape);
+			if(mainCanvas.isOnline()){
+				mainCanvas.sendObjectMessage(cloneShape);
+			}
+			tempShape.reset();
+		}
+
+		if (tempShape.type == 999){
+			shapes.clear();
+			if (mainCanvas.isOnline()){
+				mainCanvas.sendObjectMessage(cloneShape);
 			}
 			tempShape.reset();
 		}
@@ -176,89 +196,48 @@ public class ClientDrawMyShape extends JPanel {
 		repaint();
 	}
 
-
 	/**
-	 * »ñµÃ·şÎñÆ÷´«µİµÄÊı¾İ
+	 * å½“èƒŒæ™¯è‰²æˆ–è€…å‰æ™¯è‰²æ”¹å˜æ—¶è°ƒç”¨
 	 */
-	public void getDataAndRepaint(MyShape shape) {
-
-		//»ñÈ¡ÔÚÏßÁĞ±í
-		clientData.onlineList = shape.onlineList;
-		ClientDraw.jtonline.setText("Total£º"+ clientData.onlineList.size());
-		for(String user : clientData.onlineList){
-			ClientDraw.jtonline.append( "\n" +"User:"+ user);
-		}
-		if (shape.type == 6) {
-			getMessage(shape.message);
-			return;
-		}
-		if (shape.type == 7) {
-			backColor = shape.backColor;
-			repaint();
-			return;
-		}
-		shapes.add(shape.clone());
-		repaint();
-	}
-
-
-	/**
-	 * ½¨Á¢Á¬½Ó
-	 */
-	public void connect(InetAddress address, int port, boolean just) {
-		if(just) {
-			clientData = new ClientThread(address, port);
-			clientData.start();
-			log.debug("½¨Á¢Á¬½Ó");
-		} else {
-			ClientDraw.drawPanel.sendMessage(" ÄúµÄºÃÓÑ:"+ ClientDraw.userName + "ÒÑÏÂÏß!");
-			clientData.interrupt();
-			ClientDraw.isOnNet = false;
-		}
-	}
-
-
-	/**
-	 * µ±±³¾°É«»òÕßÇ°¾°É«¸Ä±äÊ±µ÷ÓÃ
-	 */
-	public void Repaint(Color cB, Color cF) {
-		shapes.add(tempShape.clone());
-		if(ClientDraw.isOnNet){
-			clientData.sendClientMsg(tempShape.clone());
+	public void RepaintType(Color background, Color front) {
+		shapes.add(tempShape.deepClone());
+		if(mainCanvas.isOnline()){
+			mainCanvas.sendObjectMessage(tempShape);
 		}
 		tempShape.reset();
-		if(cB != null) {
-			backColor = cB;
-			tempShape.backColor = cB;
+		if(background != null) {
+			backColor = background;
+			tempShape.backColor = background;
 			tempShape.type = 7;
-			shapes.add(tempShape.clone());
-			if(ClientDraw.isOnNet)
-				clientData.sendClientMsg(tempShape.clone());
+			shapes.add(tempShape.deepClone());
+			if(mainCanvas.isOnline()){
+				mainCanvas.sendObjectMessage(tempShape);
+			}
 			repaint();
 		}
 		tempShape.reset();
-		if(cF != null)
-			tempShape.fontColor = cF;
-	}
-
-	public void sendMessage(String str) {
-		MyShape shape = new MyShape();
-		shape.message = str;
-		shape.type = 6;
-		if(ClientDraw.isOnNet){
-			clientData.sendClientMsg(shape);
+		if(front != null){
+			tempShape.fontColor = front;
 		}
 	}
 
-	public void getMessage(String str) {
-		String[] split = str.split("@");
-		if(split.length < 2){
-			ClientDraw.jta.append(str + "\n");
-		}
-		else {
-			if (!"".equals(split[1].trim()) && split[1].equals(ClientDraw.userName)) {
-				ClientDraw.jta.append("(ÇÄÇÄ»°)" + split[0] + split[2] + "\n");
-			}
-		}
+	public MyShape getTempShape() {
+		return tempShape;
+	}
+
+	public CopyOnWriteArrayList<MyShape> getShapes() {
+		return shapes;
+	}
+
+	public Color getBackColor() {
+		return backColor;
+	}
+
+	public void setShapes(CopyOnWriteArrayList<MyShape> shapes) {
+		this.shapes = shapes;
+	}
+
+	public void setBackColor(Color backColor) {
+		this.backColor = backColor;
 	}
 }

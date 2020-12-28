@@ -2,363 +2,307 @@ package com.yankaizhang.board.client;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.net.*;
-import java.io.IOException;
-
+import java.net.InetAddress;
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 
-import com.yankaizhang.board.commons.Typeface;
+import com.yankaizhang.board.commons.MyShape;
+import com.yankaizhang.board.commons.TypeCanvas;
+import com.yankaizhang.board.util.Logger;
+
 
 /**
- * ¿Í»§¶Ë½çÃæ
+ * å®¢æˆ·ç«¯ä¸»ç•Œé¢
  */
 @SuppressWarnings("serial")
-class ClientCanvas extends JPanel implements ActionListener, WindowListener {
-	private ImageIcon[] icons;
-	JPanel jpDrawMode = new JPanel();
-	JPanel jpFontAndColor = new JPanel();
-	JPanel jpDrawPen = new JPanel();
-	JPanel jpShapeSelect = new JPanel();
-	JPanel jpEarser = new JPanel();
+public class ClientCanvas extends JFrame implements ActionListener{
 
-	JLabel jbName = new JLabel("ÄúµÄêÇ³Æ£º", JLabel.CENTER);
-	JLabel jbIP = new JLabel("Ä¿±êIP£º", JLabel.CENTER);
-	JLabel jbPort = new JLabel("Ä¿±ê¶Ë¿Ú£º", JLabel.CENTER);
-	JTextField jtfName = new JTextField("ÇëÊäÈëêÇ³Æ");
-	JTextField jtfIP = new JTextField("127.0.0.1");
-	JTextField jtfPort = new JTextField("7800");
-	JDialog jd = null;
+	private final Logger log = Logger.getInstance();
+	private ClientToolBar toolBar = null;
+	private ClientDrawArea drawArea = null;
+	private ClientChat chatArea = null;
+	ClientThread clientThread = null;
 
-	JButton btnLine = new JButton("A");		//"Ö±Ïß"
-	JButton btnRect = new JButton("B");		//"¾ØĞÎ"
-	JButton btnRoundRect = new JButton("I");	//"Ô²½Ç¾ØĞÎ"
-	JButton btnEcli = new JButton("D");		//"ÍÖÔ²"
-	JButton btnPen = new JButton("F");			//"¸Ö±Ê"
-	JButton btnDiamond = new JButton("C");		//"·½ĞÎ"
-	JButton btnEraser = new JButton("E");		//"ÏğÆ¤²Á"
+	private JMenuBar bar;
+	private JMenu menu1, menu2;
+	private JMenuItem offlineItem, onlineItem, exit, fun1, fun2, fun3, fun4;
 
-	JButton btnText = new JButton("G");		//"ÎÄ×Ö"
-	JButton btnSprayPen = new JButton("H");	//"ÅçÇ¹"
+	private Point pOld = null; // ç»˜å›¾çš„èµ·ç‚¹
+	private Point pNew = null; // ç»˜å›¾çš„ç»ˆç‚¹
+	private Point pTemp = null; // ä¸­é—´è¾…åŠ©ç‚¹
+	private Point pTempOld = null;// ä¸­é—´è¾…åŠ©ç‚¹
 
-	JButton btnConnect = new JButton("Á¬½Ó");	//Á¬½Ó
-	JButton btnLocal = new JButton("M");			//"±¾»ú»æÍ¼"
-	JButton btnNet = new JButton("N");				//"ÍøÂç»æÍ¼"
+	private String shapeType = "PEN";
+	private boolean online = false;
+	private String userName = "æœªå‘½åç”¨æˆ·";
 
-	JButton btnBackColor = new JButton("J");		//"±³¾°ÑÕÉ«"
-	JButton btnFrontColor = new JButton("K");		//"Ç°¾°ÑÕÉ«"
-	JButton btnFont = new JButton("L");			//"×ÖÌå"
-
-	JSlider jsPen = new JSlider(SwingConstants.HORIZONTAL, 0, 30, 15);
-	JSlider jsEarser = new JSlider(SwingConstants.HORIZONTAL, 0, 60, 30);
-
-	ButtonGroup btnGDrawMode = new ButtonGroup();
-	ButtonGroup btnGShapeSelect = new ButtonGroup();
-
-	// ÕâÀïÊÇÊó±êÒÆµ½ÏàÓ¦µÄ°´Å¥ÉÏ¸ø³öÏàÓ¦µÄÌáÊ¾
-	private String tiptext[] = { "µ¥»úÄ£Ê½", "Áª»úÄ£Ê½", "Ö±Ïß", "¾ØĞÎ", "ÁâĞÎ", "ÍÖÔ²",
-			"ÏğÆ¤²Á", "¸Ö±Ê", "ÅçÇ¹", "ÎÄ×Ö", "Ô²½Ç¾ØĞÎ", "Ç°¾°É«", "±³¾°É«", "×ÖÌå" };
-
+	/**
+	 * æ„é€ å‡½æ•°
+	 * åˆ›å»ºç”¨æˆ·ä¸»é¡µé¢
+	 */
 	public ClientCanvas() {
-		// Ìí¼Ó°´Å¥Í¼±ê
-		icons = new ImageIcon[14];
-		for (int i = 0; i < 14; i++) {
-			icons[i] = new ImageIcon("./src/com/yankaizhang/board/icon/" + (i + 1) + ".JPG");
-		}
-		jbName.setForeground(Color.red);
-		jbName.setFont(new Font("»ªÎÄ¿¬Ìå", Font.BOLD, 20));
-		jbIP.setForeground(Color.red);
-		jbIP.setFont(new Font("»ªÎÄ¿¬Ìå", Font.BOLD, 20));
-		jbPort.setForeground(Color.red);
-		jbPort.setFont(new Font("»ªÎÄ¿¬Ìå", Font.BOLD, 20));
-		jtfName.setFont(new Font("ËÎÌå", Font.PLAIN, 16));
-		jtfIP.setFont(new Font("ËÎÌå", Font.PLAIN, 16));
-		jtfPort.setFont(new Font("ËÎÌå", Font.PLAIN, 16));
-		// Îª°´Å¥Ìí¼Ó¼àÌı¡¢Í¼Æ¬¼°ÌáÊ¾Óï
-		btnLine.addActionListener(this);
-		btnLine.setIcon(icons[0]);
-		btnLine.setToolTipText(tiptext[2]);
-		btnLine.setBackground(new Color(240,240,180));
-		btnRect.addActionListener(this);
-		btnRect.setIcon(icons[2]);
-		btnRect.setToolTipText(tiptext[3]);
-		btnRect.setBackground(new Color(240,240,180));
-		btnRoundRect.addActionListener(this);
-		btnRoundRect.setIcon(icons[4]);
-		btnRoundRect.setToolTipText(tiptext[10]);
-		btnRoundRect.setBackground(new Color(240,240,180));
-		btnEcli.addActionListener(this);
-		btnEcli.setIcon(icons[1]);
-		btnEcli.setToolTipText(tiptext[5]);
-		btnEcli.setBackground(new Color(240,240,180));
-		btnPen.addActionListener(this);
-		btnPen.setIcon(icons[9]);
-		btnPen.setToolTipText(tiptext[7]);
-		btnPen.setBackground(new Color(240,240,180));
-		btnDiamond.addActionListener(this);
-		btnDiamond.setIcon(icons[3]);
-		btnDiamond.setToolTipText(tiptext[4]);
-		btnDiamond.setBackground(new Color(240,240,180));
-		btnEraser.addActionListener(this);
-		btnEraser.setIcon(icons[5]);
-		btnEraser.setToolTipText(tiptext[6]);
-		btnEraser.setBackground(new Color(240,240,180));
-		btnText.addActionListener(this);
-		btnText.setIcon(icons[6]);
-		btnText.setToolTipText(tiptext[9]);
-		btnText.setBackground(new Color(240,240,180));
-		btnSprayPen.addActionListener(this);
-		btnSprayPen.setIcon(icons[10]);
-		btnSprayPen.setToolTipText(tiptext[8]);
-		btnSprayPen.setBackground(new Color(240,240,180));
-		btnConnect.addActionListener(this);
-		btnLocal.addActionListener(this);
-		btnLocal.setIcon(icons[13]);
-		btnLocal.setToolTipText(tiptext[0]);
-		btnLocal.setBackground(new Color(240,240,180));
-		btnNet.addActionListener(this);
-		btnNet.setIcon(icons[12]);
-		btnNet.setToolTipText(tiptext[1]);
-		btnNet.setBackground(new Color(240,240,180));
-		btnBackColor.addActionListener(this);
-		btnBackColor.setIcon(icons[7]);
-		btnBackColor.setToolTipText(tiptext[12]);
-		btnBackColor.setBackground(new Color(240,240,180));
-		btnFrontColor.addActionListener(this);
-		btnFrontColor.setIcon(icons[8]);
-		btnFrontColor.setToolTipText(tiptext[11]);
-		btnFrontColor.setBackground(new Color(240,240,180));
-		btnFont.addActionListener(this);
-		btnFont.setIcon(icons[11]);
-		btnFont.setToolTipText(tiptext[13]);
-		btnFont.setBackground(new Color(240,240,180));
 
-		// Ñ¡Ôñ»æÍ¼Ä£Ê½
-		jpDrawMode.setBorder(new TitledBorder(UIManager
-				.getBorder("TitledBorder.border"), "Ä£Ê½Ñ¡Ôñ", TitledBorder.CENTER,
-				TitledBorder.ABOVE_TOP, null, Color.gray));
-		jpDrawMode.setLayout(new GridLayout(1, 2));
-
-		jpDrawMode.add(btnLocal);
-		jpDrawMode.add(btnNet);
-		btnGDrawMode.add(btnLocal);
-		btnGDrawMode.add(btnNet);
-		jpDrawMode.setPreferredSize(new Dimension(84, 50));
-
-		// Í¼ĞÎÑ¡Ôñ
-		jpShapeSelect.setBorder(new TitledBorder(UIManager
-				.getBorder("TitledBorder.border"), "Í¼ĞÎ¹¤¾ß", TitledBorder.CENTER,
-				TitledBorder.ABOVE_TOP, null, Color.gray));
-		jpShapeSelect.setLayout(new GridLayout(1, 9));
-		jpShapeSelect.setPreferredSize(new Dimension(380, 50));
-		jpShapeSelect.add(btnLine);
-		jpShapeSelect.add(btnRect);
-		jpShapeSelect.add(btnDiamond);
-		jpShapeSelect.add(btnEcli);
-		jpShapeSelect.add(btnRoundRect);
-		jpShapeSelect.add(btnEraser);
-		jpShapeSelect.add(btnPen);
-		jpShapeSelect.add(btnText);
-		jpShapeSelect.add(btnSprayPen);
-
-		btnGShapeSelect.add(btnLine);
-		btnGShapeSelect.add(btnRect);
-		btnGShapeSelect.add(btnDiamond);
-		btnGShapeSelect.add(btnEcli);
-		btnGShapeSelect.add(btnEraser);
-		btnGShapeSelect.add(btnPen);
-		btnGShapeSelect.add(btnText);
-		btnGShapeSelect.add(btnSprayPen);
-		btnGShapeSelect.add(btnRoundRect);
-		// ×ÖÌåÒÔ¼°ÑÕÉ«ÉèÖÃ
-		jpFontAndColor.setLayout(new GridLayout(1, 3));
-		jpFontAndColor.setBorder(new TitledBorder(UIManager
-				.getBorder("TitledBorder.border"), "ÑÕÉ«×ÖÌå",
-				TitledBorder.CENTER, TitledBorder.ABOVE_TOP, null, Color.gray));
-		jpFontAndColor.add(btnFrontColor);
-		jpFontAndColor.add(btnFont);
-		jpFontAndColor.add(btnBackColor);
-		jpFontAndColor.setPreferredSize(new Dimension(150, 50));
-
-		// Ñ¡Ôñ»­±ÊÒÔ¼°ÏğÆ¤ÉèÖÃ
-		jpDrawPen.setLayout(new GridLayout(1, 1, 0, 0));
-		jpDrawPen.setBorder(new TitledBorder(UIManager
-				.getBorder("TitledBorder.border"), "»­±Ê´ÖÏ¸", TitledBorder.CENTER,
-				TitledBorder.ABOVE_TOP, null, Color.gray));
-
-		jsPen.setMajorTickSpacing(3);
-		jsPen.setMinorTickSpacing(1);
-		jsPen.setPaintTicks(true);// ÏÔÊ¾¿Ì¶È
-		jsPen.addChangeListener(new ChangeListener() {
-			public void stateChanged(final ChangeEvent evt) {
-				ClientDraw.drawPanel.tempShape.penLength = jsPen.getValue();
-			}
-		});
-		jpEarser.setBorder(new TitledBorder(UIManager
-				.getBorder("TitledBorder.border"), "ÏğÆ¤´óĞ¡", TitledBorder.CENTER,
-				TitledBorder.ABOVE_TOP, null, Color.gray));
-		jpEarser.setLayout(new GridLayout(1, 1, 0, 0));
-
-		jsEarser.setMajorTickSpacing(6);
-		jsEarser.setMinorTickSpacing(2);
-		jsEarser.setPaintTicks(true);// ÏÔÊ¾¿Ì¶È
-		jsEarser.addChangeListener(new ChangeListener() {
-			public void stateChanged(final ChangeEvent evt) {
-				ClientDraw.drawPanel.tempShape.eraserLength = jsEarser
-						.getValue();
-			}
-		});
-		jpEarser.add(jsEarser);
-		jpDrawPen.add(jsPen);
-		jpDrawPen.setPreferredSize(new Dimension(120, 50));
-		jpEarser.setPreferredSize(new Dimension(120, 50));
-		// Ìí¼Ó¸÷¸öJPanel
-		this.setLayout(new FlowLayout());
-		this.add(jpDrawMode);
-		this.add(jpFontAndColor);
-		this.add(jpShapeSelect);		
-		this.add(jpDrawPen);
-		this.add(jpEarser);
-	}
-
-	// ´¦Àí¸÷¸ö°´Å¥µÄµã»÷ÊÂ¼ş
-	public void actionPerformed(final ActionEvent e) {
-		switch (e.getActionCommand()) {
-			case "Á¬½Ó"://Á¬½Ó
-				canConnect(true);
-				jd.dispose();
-				break;
-			case "A"://"Ö±Ïß"
-				ClientDraw.shapeType = "LINE";
-				break;
-			case "G"://ÎÄ×Ö
-				ClientDraw.shapeType = "TEXT";
-				break;
-			case "D"://ÍÖÔ²
-				ClientDraw.shapeType = "ECLI";
-				break;
-			case "B"://¾ØĞÎ
-				ClientDraw.shapeType = "RECT";
-				break;
-			case "I"://Ô²½Ç¾ØĞÎ
-				ClientDraw.shapeType = "RRECT";
-				break;
-			case "E"://ÏğÆ¤²Á
-				ClientDraw.shapeType = "EARSER";
-				break;
-			case "C"://Õı·½ĞÎ
-				ClientDraw.shapeType = "DIAMOND";
-				break;
-			case "F"://¸Ö±Ê
-				ClientDraw.shapeType = "PEN";
-				break;
-			case "H"://ÅçÇ¹
-				ClientDraw.shapeType = "SPEN";
-				break;
-			case "N"://ÍøÂç»æÍ¼
-				showModeJDialog();
-				break;
-			case "J"://±³¾°ÑÕÉ«
-				ClientDraw.drawPanel
-						.Repaint(JColorChooser.showDialog(this, "±³¾°É«ÉèÖÃ",Color.black), null);
-				break;
-			case "K"://Ç°¾°ÑÕÉ«
-				ClientDraw.drawPanel.Repaint(null,
-						JColorChooser.showDialog(this, "Ç°¾°É«ÉèÖÃ", Color.black));
-				break;
-			case "L"://×ÖÌå
-				new Typeface();
-				break;
-			default: break;
-		}
-	}
-
-	// ÏÔÊ¾ÁªÍøÄ£Ê½µÄ¶Ô»°¿ò£¬ÊäÈë¶Ë¿ÚºÅ£¬IPµÈ
-	public void showModeJDialog() {
-		jd = new JDialog();
-		jd.setTitle("Á¬½Ó·şÎñÆ÷");
-		jd.setSize(250, 200);
-		jd.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-		jd.setResizable(false);
-		jd.setLayout(new GridLayout(4, 2, 5, 5));
-		jd.add(jbName);
-		jd.add(jtfName);
-		jd.add(jbPort);
-		jd.add(jtfPort);
-		jd.add(jbIP);
-		jd.add(jtfIP);
-		jd.add(btnConnect);
-		jd.setVisible(true);
-		jd.setBackground(Color.cyan);
-		final int width = Toolkit.getDefaultToolkit().getScreenSize().width;
-		final int height = Toolkit.getDefaultToolkit().getScreenSize().height;
-		jd.setLocation(width / 2 - 125, height / 2 - 125);
-		jd.addWindowListener(new WindowAdapter() {
+		setTitle("ç½‘ç»œç™½æ¿ - å®¢æˆ·ç«¯");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 1000, 800);
+		setResizable(false);
+		
+		//æ·»åŠ èœå•æ 
+		bar = new JMenuBar();
+		menu1 = new JMenu("å¼€å§‹");
+		menu2 = new JMenu("é€‰é¡¹");
+		bar.add(menu1);
+		bar.add(menu2);
+		offlineItem = new JMenuItem("å•æœºæ¨¡å¼");
+		offlineItem.setEnabled(false);
+		onlineItem = new JMenuItem("è”ç½‘æ¨¡å¼");
+		exit = new JMenuItem("é€€å‡º");
+		menu1.add(offlineItem);
+		menu1.add(onlineItem);
+		menu1.add(exit);
+		offlineItem.addMouseListener(new MouseAdapter() {
 			@Override
-			public void windowClosing(final WindowEvent e) {
-				jd.dispose();
+			public void mouseReleased(MouseEvent e) {
+				connect(null, -1, false);
+				onlineItem.setEnabled(false);
+				offlineItem.setEnabled(true);
+			}
+		});
+		onlineItem.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				// å»ºç«‹è¿æ¥
+				toolBar.showModeJDialog();
+				onlineItem.setEnabled(false);
+				offlineItem.setEnabled(false);
+				getToolBar().btnNet.setEnabled(false);
+				getToolBar().btnLocal.setEnabled(false);
+			}
+		});
+		exit.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				System.exit(0);
+			}
+		});
+		fun1 = new JMenuItem("èƒŒæ™¯è‰²");
+		fun2 = new JMenuItem("å­—ä½“é¢œè‰²");
+		fun3 = new JMenuItem("å­—ä½“è®¾ç½®");
+		fun4 = new JMenuItem("æ¸…å±");
+		menu2.add(fun1);
+		menu2.add(fun2);
+		menu2.add(fun3);
+		menu2.add(fun4);
+
+		fun1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				drawArea.RepaintType(JColorChooser.showDialog(null,"èƒŒæ™¯è‰²è®¾ç½®",Color.black), null);
+			}
+		});
+		fun2.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				drawArea.RepaintType(null, JColorChooser.showDialog(null, "å­—ä½“é¢œè‰²", Color.black));
+			}
+		});
+		fun3.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				showTypeCanvas();
+			}
+		});
+		fun4.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				clearBoard();
+			}
+		});
+		setJMenuBar(bar);
+
+
+		// åˆ›å»ºå·¥å…·æ åŒºåŸŸ
+		toolBar = new ClientToolBar(this);
+		toolBar.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "--------å·¥å…·æ -------", TitledBorder.CENTER, TitledBorder.ABOVE_TOP, null, new Color(46, 48, 50)));
+		toolBar.setBackground(new Color(106,147,176));
+		getContentPane().add(toolBar, BorderLayout.NORTH);
+
+		// åˆ›å»ºç»˜å›¾åŒºåŸŸ
+		drawArea = new ClientDrawArea(this);
+		drawArea.setBackground(Color.white);
+		getContentPane().add(drawArea, BorderLayout.CENTER);
+
+		// åˆ›å»ºèŠå¤©åŒºåŸŸ
+		chatArea = new ClientChat(this);
+		getContentPane().add(chatArea, BorderLayout.EAST);
+
+		// ç›‘å¬ä¸»çª—å£çš„å…³é—­äº‹ä»¶ï¼Œä¸»è¦æ˜¯é‡Šæ”¾ç›¸å…³èµ„æº
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				if (online) {
+					toolBar.manageConnection(false);
+				}
 			}
 		});
 
+
+		// ä»¥ä¸‹ä¸ºç›‘å¬é¼ æ ‡çš„äº‹ä»¶ï¼ŒåŒ…æ‹¬æŒ‰ä¸‹ï¼Œç§»åŠ¨ï¼Œé‡Šæ”¾
+		pTempOld = new Point(0, 0);// åˆå§‹åŒ–è¾…åŠ©ç»˜å›¾ç‚¹
+		drawArea.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				pOld = e.getPoint();
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				pNew = e.getPoint();
+				pTempOld.x = pOld.x;
+				pTempOld.y = pOld.y;
+				drawArea.drawShape(shapeType, pTempOld, pNew, true);
+			}
+		});
+
+		drawArea.addMouseMotionListener(new MouseMotionAdapter() {
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				pTemp = e.getPoint();
+				pTempOld.x = pOld.x;
+				pTempOld.y = pOld.y;
+				drawArea.drawShape(shapeType, pTempOld, pTemp, false);
+			}
+		});
 	}
 
-	// È·ÈÏÁªÍø
-	public void canConnect(final boolean just) {
-		if (!just) {
-			ClientDraw.drawPanel.connect(null, -1, just);
+
+	/**
+	 * æ¸…å±
+	 */
+	private void clearBoard() {
+		drawArea.drawShape("CLS", null, null, true);
+	}
+
+	/**
+	 * è¿æ¥ç®¡ç†
+	 */
+	public void connect(InetAddress address, int port, boolean just) {
+		if (just) {
+			clientThread = new ClientThread(address, port, this);
+			clientThread.start();
+			log.debug("å°è¯•å»ºç«‹è¿æ¥");
+		} else {
+			if (clientThread != null && clientThread.isAlive()){
+				sendTextMessage(userName + "æ–­å¼€è¿æ¥");
+				clientThread.interrupt();
+				log.debug("æ–­å¼€è¿œç¨‹è¿æ¥");
+			}
+		}
+	}
+
+	/**
+	 * å‘é€æ–‡æœ¬æ¶ˆæ¯
+	 */
+	public void sendTextMessage(String str) {
+		// åŒ…è£…ä¸ºå¯¹è±¡æ•°æ®
+		MyShape shape = new MyShape();
+		shape.message = str;
+		shape.type = 6;
+		sendObjectMessage(shape);
+	}
+
+	/**
+	 * å‘é€å¯¹è±¡æ•°æ®
+	 */
+	public void sendObjectMessage(Object object){
+		if(online){
+			clientThread.sendClientMsg(object);
+		}
+	}
+
+	/**
+	 * æ ¹æ®æ–°æ•°æ®é‡æ–°ç»˜åˆ¶
+	 */
+	public void getDataAndRepaint(MyShape shape) {
+		//è·å–åœ¨çº¿åˆ—è¡¨
+		clientThread.onlineList = shape.onlineList;
+		chatArea.jtonline.setText("Totalï¼š"+ clientThread.onlineList.size());
+		for(String user : clientThread.onlineList){
+			chatArea.jtonline.append( "\n" +"User:"+ user);
+		}
+		if (shape.type == 6) {
+			chatArea.showMsg(shape.message + "\n");
 			return;
 		}
-		ClientDraw.userName = jtfName.getText().trim();
-		final String portstr = jtfPort.getText().trim();
-		final String IPstr = jtfIP.getText().trim(); // µÃµ½IP£¬¶Ë¿ÚºÅ
-		final int port = Integer.parseInt(portstr);
-		InetAddress address = null;
-		try {
-			address = InetAddress.getByName(IPstr);
-		} catch (UnknownHostException e1) {
-			JOptionPane.showMessageDialog(null, "ÄúÊäÈëµÄIPÓĞÎó£¬ÇëÖØĞÂÊäÈë!", "IP´íÎó", JOptionPane.ERROR_MESSAGE);
+		if (shape.type == 7) {
+			drawArea.setBackColor(shape.backColor);
+			repaint();
 			return;
 		}
-		assert address != null;
-		ClientDraw.drawPanel.connect(address, port, just);
-		ClientDraw.isOnNet = true;
-		ClientDraw.drawPanel.sendMessage(ClientDraw.userName + "ÒÑÉÏÏß!");
+		if (shape.type == 999){
+			drawArea.getShapes().clear();
+			drawArea.getTempShape().reset();
+			drawArea.repaint();
+			return;
+		}
+		drawArea.getShapes().add(shape.deepClone());
+		repaint();
+	}
+
+	/**
+	 * æ˜¾ç¤ºæ ·å¼è®¾ç½®é¢æ¿
+	 */
+	public void showTypeCanvas(){
+		new TypeCanvas(this);
 	}
 
 	@Override
-	public void windowOpened(final WindowEvent e) {
+	public void actionPerformed(ActionEvent arg0) {
 
 	}
 
-	@Override
-	public void windowClosing(final WindowEvent e) {
-
+	public boolean isOnline() {
+		return this.online;
 	}
 
-	@Override
-	public void windowClosed(final WindowEvent e) {
-
+	public void setOnline(boolean online) {
+		this.online = online;
+		// æ›´æ–°å„ç§æŒ‰é’®çŠ¶æ€
+		if (online){
+			onlineItem.setEnabled(false);
+			offlineItem.setEnabled(true);
+			getToolBar().btnNet.setEnabled(false);
+			getToolBar().btnLocal.setEnabled(true);
+		}else{
+			onlineItem.setEnabled(true);
+			offlineItem.setEnabled(false);
+			getToolBar().btnNet.setEnabled(true);
+			getToolBar().btnLocal.setEnabled(false);
+			getChatArea().reset();
+		}
 	}
 
-	@Override
-	public void windowIconified(final WindowEvent e) {
-
+	public String getUserName() {
+		return userName;
 	}
 
-	@Override
-	public void windowDeiconified(final WindowEvent e) {
-
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
 
-	@Override
-	public void windowActivated(final WindowEvent e) {
-
+	public ClientToolBar getToolBar() {
+		return toolBar;
 	}
 
-	@Override
-	public void windowDeactivated(final WindowEvent e) {
-
+	public ClientDrawArea getDrawArea() {
+		return drawArea;
 	}
 
+	public ClientChat getChatArea() {
+		return chatArea;
+	}
+
+	public void setShapeType(String shapeType) {
+		this.shapeType = shapeType;
+	}
 }

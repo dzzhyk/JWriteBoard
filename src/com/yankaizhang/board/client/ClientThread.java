@@ -12,35 +12,39 @@ import com.yankaizhang.board.commons.MyShape;
 import com.yankaizhang.board.util.Logger;
 
 /**
- * ¿Í»§¶ËÏß³Ì
+ * å®¢æˆ·ç«¯çº¿ç¨‹
  */
 public class ClientThread extends Thread {
 
 	private final Logger log = Logger.getInstance();
 	Socket socket = null;
+	private final ClientCanvas mainCanvas;
 	public List<String> onlineList = new CopyOnWriteArrayList<>();
 	ObjectOutputStream objOut = null;
 	ObjectInputStream objIn = null;
 
-	public ClientThread(InetAddress address, int port) {
+	public ClientThread(InetAddress address, int port, ClientCanvas canvas) {
+		mainCanvas = canvas;
+		assert canvas != null;
 		try {
 			this.socket = new Socket(address, port);
-			// Á¬½ÓÖ®ºóÊ×ÏÈ·¢ËÍÓÃ»§Ãû
 			PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
-			out.println(ClientDraw.userName);
+			out.println(canvas.getUserName());
 			out.flush();
 
 			objOut = new ObjectOutputStream(socket.getOutputStream());
 			objIn = new ObjectInputStream(socket.getInputStream());
 
-			ClientDraw.isOnNet = true;
-			log.debug("Á¬½Ó·şÎñÆ÷³É¹¦ : userName : " + ClientDraw.userName);
+			mainCanvas.setOnline(true);
+			log.debug("è¿æ¥æœåŠ¡å™¨æˆåŠŸ : userName : " + canvas.getUserName());
 
 		}catch(IOException e) {
-			JOptionPane.showMessageDialog(null, "·şÎñÆ÷Á¬½Ó´íÎó", "Á¬½Ó´íÎó", JOptionPane.ERROR_MESSAGE);
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "æœåŠ¡å™¨è¿æ¥é”™è¯¯", "è¿æ¥é”™è¯¯", JOptionPane.ERROR_MESSAGE);
 			try {
-				this.socket.close();
+				if (this.socket != null){
+					this.socket.close();
+				}
+				mainCanvas.setOnline(false);
 			} catch (IOException ioException) {
 				ioException.printStackTrace();
 			}
@@ -52,13 +56,23 @@ public class ClientThread extends Thread {
 	public void run() {
 		while (true) {
 			try {
+				if (this.objIn == null){
+					log.debug("å¯¹è±¡è¾“å…¥æµä¸ºNull");
+					break;
+				}
+				if (this.socket.isClosed()){
+					break;
+				}
 				MyShape shape = (MyShape) objIn.readObject();
-				ClientDraw.drawPanel.getDataAndRepaint(shape);
-				log.debug("ÊÕµ½ĞÂÄÚÈİ£¬ÖØĞÂ»æÖÆ");
+				mainCanvas.getDataAndRepaint(shape);
+				log.debug("æ”¶åˆ°æ–°å†…å®¹ï¼Œé‡æ–°ç»˜åˆ¶");
 			}catch(ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 				try {
-					this.socket.close();
+					if (this.socket != null){
+						this.socket.close();
+					}
+					mainCanvas.setOnline(false);
 					break;
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
@@ -70,12 +84,12 @@ public class ClientThread extends Thread {
 
 
 	/**
-	 * ·¢ËÍÏûÏ¢
+	 * å‘é€æ¶ˆæ¯
 	 */
 	public void sendClientMsg(Object msg) {
 		try {
 			objOut.writeObject(msg);
-			log.debug("·¢ËÍÄÚÈİ");
+			log.debug("å‘é€å†…å®¹");
 		}catch(IOException e) {
 			e.printStackTrace();
 			try {
@@ -94,7 +108,7 @@ public class ClientThread extends Thread {
 			objOut.close();
 			objIn.close();
 			socket.close();
-			log.debug("¶Ï¿ªÁ¬½Ó³É¹¦");
+			mainCanvas.setOnline(false);
 		}catch (IOException e){
 			e.printStackTrace();
 		}

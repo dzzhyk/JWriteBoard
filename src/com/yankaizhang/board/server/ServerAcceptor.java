@@ -9,7 +9,7 @@ import java.util.concurrent.*;
 import javax.swing.JTextArea;
 
 /**
- * ×¨ÃÅ¸ºÔğ½ÓÊÕÁ¬½ÓµÄÏß³Ì
+ * æœåŠ¡ç«¯æ¥æ”¶çº¿ç¨‹
  */
 public class ServerAcceptor extends Thread {
 
@@ -18,12 +18,14 @@ public class ServerAcceptor extends Thread {
 	private static JTextArea textArea;
 	private static int port;
 
-	/** Ïß³ÌMap */
+	/** çº¿ç¨‹Map */
 	private static final Map<String, ServerThread> threadMap = new ConcurrentHashMap<>(32);
 
-	/** ×î¶à32ÈË */
+	/** æœ€å¤š32äºº */
 	private final ExecutorService executors = new ThreadPoolExecutor(32, 32,
-			30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+			1, TimeUnit.SECONDS, new LinkedBlockingDeque<>(),
+			Executors.defaultThreadFactory(),
+			new ThreadPoolExecutor.AbortPolicy());
 
 	public ServerAcceptor(JTextArea area) {
 		textArea = area;
@@ -46,7 +48,7 @@ public class ServerAcceptor extends Thread {
 			}
 			assert newSocket != null;
 			executors.submit(new ServerThread(newSocket, textArea));
-			log.debug("ĞÂ½¨·şÎñÏß³Ì");
+			log.debug("æ–°å»ºæœåŠ¡çº¿ç¨‹");
 		}
 	}
 
@@ -55,41 +57,39 @@ public class ServerAcceptor extends Thread {
 		super.interrupt();
 		threadMap.clear();
 		this.executors.shutdown();
-		log.debug("·şÎñ¶ËÍ£Ö¹³É¹¦");
+		log.debug("æœåŠ¡ç«¯åœæ­¢æˆåŠŸ");
 	}
 
 	/**
-	 * ×¢²áĞÂµÄ·şÎñÏß³Ì
+	 * æ³¨å†Œæ–°çš„æœåŠ¡çº¿ç¨‹
 	 */
 	public static void registerThread(String threadName, ServerThread serverThread) throws RuntimeException {
 		if (threadMap.containsKey(threadName)){
-			throw new RuntimeException("ÓÃ»§Ãû³åÍ» => " + threadName);
+			throw new RuntimeException("ç”¨æˆ·åå†²çª => " + threadName);
 		}
 		threadMap.put(threadName, serverThread);
 	}
 
 	/**
-	 * ÒÆ³ı·şÎñÏß³Ì
+	 * ç§»é™¤æœåŠ¡çº¿ç¨‹
 	 */
 	public static void removeThread(ServerThread thread){
 		for (Map.Entry<String, ServerThread> entry : threadMap.entrySet()) {
 			if (entry.getValue().equals(thread)){
 				threadMap.remove(entry.getKey());
-				System.out.println("ÒÆ³ı·şÎñÏß³Ì => " + entry.getKey());
+				System.out.println("ç§»é™¤æœåŠ¡çº¿ç¨‹ => " + entry.getKey());
 				break;
 			}
 		}
 	}
 
 	/**
-	 * ¹ã²¥¿Í»§¶ËÏûÏ¢
+	 * å¹¿æ’­å®¢æˆ·ç«¯æ¶ˆæ¯
 	 */
 	public static void broadcastMsg(Object msg, ServerThread src){
 		try {
 			for(ServerThread thread : threadMap.values()) {
-				if(src != thread){
-					thread.getObjOut().writeObject(msg);
-				}
+				thread.getObjOut().writeObject(msg);
 			}
 		}catch (IOException e){
 
@@ -97,20 +97,20 @@ public class ServerAcceptor extends Thread {
 	}
 
 	/**
-	 * ÔÚ·şÎñ¶ËÏÔÊ¾ÏûÏ¢
+	 * åœ¨æœåŠ¡ç«¯æ˜¾ç¤ºæ¶ˆæ¯
 	 */
 	public static void showServerMsg(String msg){
 		textArea.append(msg);
 	}
 
 	/**
-	 * ±ØĞëÉèÖÃ¶Ë¿Ú
+	 * å¿…é¡»è®¾ç½®ç«¯å£
 	 */
 	public void setPort(int p) {
 		port = p;
 		try {
 			serversocket = new ServerSocket(port);
-			log.debug("·şÎñ¶ËÆô¶¯³É¹¦ : ¶Ë¿Ú" + port);
+			log.debug("æœåŠ¡ç«¯å¯åŠ¨æˆåŠŸ : ç«¯å£" + port);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

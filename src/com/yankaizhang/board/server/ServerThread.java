@@ -2,17 +2,20 @@ package com.yankaizhang.board.server;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.swing.JTextArea;
 
 import com.yankaizhang.board.commons.MyShape;
+import com.yankaizhang.board.util.Logger;
 
 /**
- * ·şÎñÏß³Ì
+ * æœåŠ¡çº¿ç¨‹
  */
 public class ServerThread implements Runnable {
 
+	private final Logger log = Logger.getInstance();
 	private Socket socket = null;
 	private ObjectOutputStream objOut = null;
 	private ObjectInputStream objIn = null;
@@ -23,7 +26,7 @@ public class ServerThread implements Runnable {
 		this.textArea = textArea;
 		String clientName = "";
 		try {
-			//»ñµÃ¿Í»§¶ËµÄÃû×Ö
+			//è·å¾—å®¢æˆ·ç«¯çš„åå­—
 			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			clientName = in.readLine();
 
@@ -32,13 +35,14 @@ public class ServerThread implements Runnable {
 		}
 
 		ServerAcceptor.registerThread(clientName, this);
-		ServerAcceptor.showServerMsg("\n [ĞÂÁ¬½Ó] ip: " + socket.getInetAddress());
+		ServerAcceptor.showServerMsg("\n [æ–°è¿æ¥] ip: " + socket.getInetAddress() + " user: " + clientName);
+		log.debug("\n [æ–°è¿æ¥] ip: " + socket.getInetAddress() + " user: " + clientName);
 	}
 
 	@Override
 	public void run() {
 
-		// Ö÷Òª¶ÔÏóÁ÷µÄ´´½¨Ë³Ğò
+		// ä¸»è¦å¯¹è±¡æµçš„åˆ›å»ºé¡ºåº
 		try {
 			objIn = new ObjectInputStream(socket.getInputStream());
 			objOut = new ObjectOutputStream(socket.getOutputStream());
@@ -47,29 +51,26 @@ public class ServerThread implements Runnable {
 			return;
 		}
 
-		// ¼àÌıÊÇ·ñÓĞÊı¾İ´«Èë
+		// ç›‘å¬æ˜¯å¦æœ‰æ•°æ®ä¼ å…¥
 		while(true) {
 			try {
 				MyShape shape = (MyShape) objIn.readObject();
 				shape.onlineList = new CopyOnWriteArrayList<>(ServerAcceptor.getThreadMap().keySet());
 				sendClientMsg(shape, this);
-
 			} catch(ClassNotFoundException e) {
 				e.printStackTrace();
 				break;
-			} catch (EOFException e){
-				ServerAcceptor.showServerMsg("\n [¶Ï¿ªÁ¬½Ó] user: "+ Thread.currentThread().getName() +", ip: " + this.socket.getInetAddress());
+			} catch(IOException e) {
 				ServerAcceptor.removeThread(this);
-				break;
-			} catch(Exception e) {
-				e.printStackTrace();
+				ServerAcceptor.showServerMsg("\n [æ–­å¼€è¿æ¥] user: "+ Thread.currentThread().getName() +", ip: " + this.socket.getInetAddress());
+				log.debug("\n [æ–­å¼€è¿æ¥] user: "+ Thread.currentThread().getName() +", ip: " + this.socket.getInetAddress());
 				break;
 			}
 		}
 	}
 
 	/**
-	 * Ïò¿Í·ş¶Ë¹ã²¥ÏûÏ¢(»­°åÄÚÈİ)
+	 * å‘å®¢æœç«¯å¹¿æ’­æ¶ˆæ¯(ç”»æ¿å†…å®¹)
 	 */
 	private void sendClientMsg(MyShape shape, ServerThread src) {
 		ServerAcceptor.broadcastMsg(shape, src);

@@ -6,7 +6,7 @@ import javax.swing.*;
 
 
 /**
- * ·þÎñÆ÷½çÃæ
+ * æœåŠ¡å™¨ç•Œé¢
  */
 class ServerCanvas extends JPanel {
 
@@ -24,11 +24,11 @@ class ServerCanvas extends JPanel {
 		lblNewLabel.setForeground(Color.black);
 		this.add(lblNewLabel);
 
-		JButton startServer = new JButton("Æô¶¯");
-		JButton endServer = new JButton("Í£Ö¹");
+		JButton startServer = new JButton("å¯åŠ¨");
+		JButton endServer = new JButton("åœæ­¢");
 		startServer.setEnabled(true);
 		endServer.setEnabled(false);
-		textField.setFont(new Font("ËÎÌå", Font.PLAIN, 18));
+		textField.setFont(new Font("å®‹ä½“", Font.PLAIN, 18));
 		textField.setText("7800");
 		textField.setEditable(true);
 		textField.setColumns(8);
@@ -42,7 +42,7 @@ class ServerCanvas extends JPanel {
 			endServer.setEnabled(true);
 		});
 
-		startServer.setFont(new Font("ËÎÌå", Font.BOLD, 18));
+		startServer.setFont(new Font("å®‹ä½“", Font.BOLD, 18));
 		endServer.setBackground(new Color(178,34,34));
 		endServer.addActionListener(e -> {
 			synchronized (this.acceptor){
@@ -53,7 +53,7 @@ class ServerCanvas extends JPanel {
 				endServer.setEnabled(false);
 			}
 		});
-		endServer.setFont(new Font("ËÎÌå", Font.BOLD, 18));
+		endServer.setFont(new Font("å®‹ä½“", Font.BOLD, 18));
 
 		this.add(textField);
 		this.add(startServer);
