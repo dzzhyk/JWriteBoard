@@ -58,16 +58,9 @@ public class ServerThread implements Runnable {
 	@Override
 	public void run() {
 
-		if (this.socket == null){
-			return;
-		}
-
-		// 主要对象流的创建顺序
 		try {
-
 			objIn = new ObjectInputStream(socket.getInputStream());
 			objOut = new ObjectOutputStream(socket.getOutputStream());
-
 		} catch (IOException e) {
 			try {
 				disConnect();

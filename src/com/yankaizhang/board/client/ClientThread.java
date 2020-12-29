@@ -45,9 +45,6 @@ public class ClientThread extends Thread {
 
 	@Override
 	public void run() {
-		if (this.socket == null){
-			return;
-		}
 		try {
 			objOut = new ObjectOutputStream(socket.getOutputStream());
 			objIn = new ObjectInputStream(socket.getInputStream());
