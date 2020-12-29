@@ -301,8 +301,8 @@ class ClientToolBar extends JPanel implements ActionListener, WindowListener {
 		jd.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(final WindowEvent e) {
-				jd.dispose();
-				mainCanvas.setOnline(false);
+			jd.dispose();
+			mainCanvas.setOnline(false);
 			}
 		});
 	}
@@ -326,6 +326,7 @@ class ClientToolBar extends JPanel implements ActionListener, WindowListener {
 			address = InetAddress.getByName(IpStr);
 		} catch (UnknownHostException e1) {
 			JOptionPane.showMessageDialog(null, "连接有误，请重新输入!", "连接错误", JOptionPane.ERROR_MESSAGE);
+			mainCanvas.setOnline(false);
 			return;
 		}
 		assert address != null;

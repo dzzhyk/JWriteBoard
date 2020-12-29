@@ -7,7 +7,7 @@ import java.net.SocketException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.swing.JOptionPane;
+import javax.swing.*;
 
 import com.yankaizhang.board.commons.MyShape;
 import com.yankaizhang.board.util.Logger;
@@ -48,13 +48,13 @@ public class ClientThread extends Thread {
 		if (this.socket == null){
 			return;
 		}
-
 		try {
 			objOut = new ObjectOutputStream(socket.getOutputStream());
 			objIn = new ObjectInputStream(socket.getInputStream());
-//			mainCanvas.sendTextMessage(mainCanvas.getUserName() + " 已登录");
 		} catch (IOException e) {
-			this.interrupt();
+			JOptionPane.showMessageDialog(mainCanvas.getToolBar().jd, "用户名已存在", "连接错误", JOptionPane.ERROR_MESSAGE);
+			mainCanvas.getToolBar().manageConnection(false);
+			return;
 		}
 
 		while (true) {
@@ -94,7 +94,6 @@ public class ClientThread extends Thread {
 			if (objIn != null && !socket.isClosed()) objIn.close();
 			if (objOut != null && !socket.isClosed()) objOut.close();
 			if (this.socket != null && !socket.isClosed()) this.socket.close();
-			mainCanvas.setOnline(false);
 			log.debug("断开远程连接");
 		}catch (IOException e){
 			e.printStackTrace();

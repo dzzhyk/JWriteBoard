@@ -192,11 +192,11 @@ public class ClientCanvas extends JFrame implements ActionListener{
 		} else {
 			if (clientThread != null && clientThread.isAlive()){
 				clientThread.onlineList.remove(getUserName());
-//				sendTextMessage(userName + "断开连接");
 				while (!clientThread.isInterrupted()){
 					clientThread.interrupt();
 				}
 			}
+			this.setOnline(false);
 		}
 	}
 
