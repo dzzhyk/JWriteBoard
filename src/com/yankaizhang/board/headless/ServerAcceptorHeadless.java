@@ -1,29 +1,26 @@
-package com.yankaizhang.board.server;
+package com.yankaizhang.board.headless;
 
 import com.yankaizhang.board.util.Logger;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Map;
-import java.util.concurrent.*;
-import javax.swing.JTextArea;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 服务端监听线程
+ * 监听线程
  */
-public class ServerAcceptor extends Thread {
+public class ServerAcceptorHeadless extends Thread {
 
 	private final Logger log = Logger.getInstance();
-	private static ServerSocket serversocket = null;
-	private static JTextArea textArea;
-	private static int port;
+	private ServerSocket serversocket = null;
+	private int port;
 
 	/** 线程Map */
-	private static final Map<String, ServerThread> threadMap = new ConcurrentHashMap<>(256);
+	private static final Map<String, ServerThreadHeadless> threadMap = new ConcurrentHashMap<>(256);
 
-	public ServerAcceptor(JTextArea area) {
-		textArea = area;
-	}
+	public ServerAcceptorHeadless(){}
 
 	@Override
 	public void run()
@@ -41,7 +38,7 @@ public class ServerAcceptor extends Thread {
 				}
 			}
 			assert newSocket != null;
-			new Thread(new ServerThread(newSocket, textArea)).start();
+			new Thread(new ServerThreadHeadless(newSocket)).start();
 		}
 	}
 
@@ -55,7 +52,7 @@ public class ServerAcceptor extends Thread {
 	/**
 	 * 注册新的服务线程
 	 */
-	public static void registerThread(String threadName, ServerThread serverThread) throws RuntimeException {
+	public static void registerThread(String threadName, ServerThreadHeadless serverThread) throws RuntimeException {
 		if (threadMap.containsKey(threadName)){
 			throw new RuntimeException("用户名冲突 => " + threadName);
 		}
@@ -65,8 +62,8 @@ public class ServerAcceptor extends Thread {
 	/**
 	 * 移除服务线程
 	 */
-	public static void removeThread(ServerThread thread){
-		for (Map.Entry<String, ServerThread> entry : threadMap.entrySet()) {
+	public static void removeThread(ServerThreadHeadless thread){
+		for (Map.Entry<String, ServerThreadHeadless> entry : threadMap.entrySet()) {
 			if (entry.getValue().equals(thread)){
 				threadMap.remove(entry.getKey());
 				break;
@@ -77,21 +74,14 @@ public class ServerAcceptor extends Thread {
 	/**
 	 * 广播客户端消息
 	 */
-	public static void broadcastMsg(Object msg, ServerThread src){
+	public static void broadcastMsg(Object msg){
 		try {
-			for(ServerThread thread : threadMap.values()) {
+			for(ServerThreadHeadless thread : threadMap.values()) {
 				thread.getObjOut().writeObject(msg);
 			}
 		}catch (IOException e){
 
 		}
-	}
-
-	/**
-	 * 在服务端显示消息
-	 */
-	public static void showServerMsg(String msg){
-		textArea.append(msg);
 	}
 
 	/**
@@ -107,7 +97,7 @@ public class ServerAcceptor extends Thread {
 		}
 	}
 
-	public static Map<String, ServerThread> getThreadMap() {
+	public static Map<String, ServerThreadHeadless> getThreadMap() {
 		return threadMap;
 	}
 }
