@@ -311,7 +311,7 @@ class ClientToolBar extends JPanel implements ActionListener, WindowListener {
 	/**
 	 * 连接管理
 	 */
-	public void manageConnection(boolean just) {
+	public synchronized void manageConnection(boolean just) {
 		// 断开连接
 		if (!just) {
 			mainCanvas.connect(null, -1, false);
@@ -330,7 +330,6 @@ class ClientToolBar extends JPanel implements ActionListener, WindowListener {
 		}
 		assert address != null;
 		mainCanvas.connect(address, port, true);
-		mainCanvas.sendTextMessage(mainCanvas.getUserName() + " 已登录");
 	}
 
 

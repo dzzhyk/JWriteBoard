@@ -3,6 +3,7 @@ package com.yankaizhang.board.client;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.InetAddress;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -63,9 +64,7 @@ public class ClientCanvas extends JFrame implements ActionListener{
 		offlineItem.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				connect(null, -1, false);
-				onlineItem.setEnabled(false);
-				offlineItem.setEnabled(true);
+				getToolBar().manageConnection(false);
 			}
 		});
 		onlineItem.addMouseListener(new MouseAdapter() {
@@ -140,9 +139,9 @@ public class ClientCanvas extends JFrame implements ActionListener{
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (online) {
-					toolBar.manageConnection(false);
-				}
+			if (online) {
+				toolBar.manageConnection(false);
+			}
 			}
 		});
 
@@ -190,12 +189,13 @@ public class ClientCanvas extends JFrame implements ActionListener{
 		if (just) {
 			clientThread = new ClientThread(address, port, this);
 			clientThread.start();
-			log.debug("尝试建立连接");
 		} else {
 			if (clientThread != null && clientThread.isAlive()){
-				sendTextMessage(userName + "断开连接");
-				clientThread.interrupt();
-				log.debug("断开远程连接");
+				clientThread.onlineList.remove(getUserName());
+//				sendTextMessage(userName + "断开连接");
+				while (!clientThread.isInterrupted()){
+					clientThread.interrupt();
+				}
 			}
 		}
 	}
@@ -208,6 +208,9 @@ public class ClientCanvas extends JFrame implements ActionListener{
 		MyShape shape = new MyShape();
 		shape.message = str;
 		shape.type = 6;
+		if (clientThread != null && clientThread.onlineList.size() > 0){
+			shape.onlineList = new CopyOnWriteArrayList<>(clientThread.onlineList);
+		}
 		sendObjectMessage(shape);
 	}
 
@@ -225,13 +228,14 @@ public class ClientCanvas extends JFrame implements ActionListener{
 	 */
 	public void getDataAndRepaint(MyShape shape) {
 		//获取在线列表
-		clientThread.onlineList = shape.onlineList;
+		clientThread.onlineList = new CopyOnWriteArrayList<>(shape.onlineList);
 		chatArea.jtonline.setText("Total："+ clientThread.onlineList.size());
 		for(String user : clientThread.onlineList){
 			chatArea.jtonline.append( "\n" +"User:"+ user);
 		}
 		if (shape.type == 6) {
 			chatArea.showMsg(shape.message + "\n");
+			chatArea.repaint();
 			return;
 		}
 		if (shape.type == 7) {
@@ -266,7 +270,7 @@ public class ClientCanvas extends JFrame implements ActionListener{
 		return this.online;
 	}
 
-	public void setOnline(boolean online) {
+	public synchronized void setOnline(boolean online) {
 		this.online = online;
 		// 更新各种按钮状态
 		if (online){

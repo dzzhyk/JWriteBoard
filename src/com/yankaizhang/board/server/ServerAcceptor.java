@@ -19,13 +19,7 @@ public class ServerAcceptor extends Thread {
 	private static int port;
 
 	/** 线程Map */
-	private static final Map<String, ServerThread> threadMap = new ConcurrentHashMap<>(32);
-
-	/** 最多32人 */
-	private final ExecutorService executors = new ThreadPoolExecutor(32, 32,
-			1, TimeUnit.SECONDS, new LinkedBlockingDeque<>(),
-			Executors.defaultThreadFactory(),
-			new ThreadPoolExecutor.AbortPolicy());
+	private static final Map<String, ServerThread> threadMap = new ConcurrentHashMap<>(256);
 
 	public ServerAcceptor(JTextArea area) {
 		textArea = area;
@@ -47,8 +41,7 @@ public class ServerAcceptor extends Thread {
 				}
 			}
 			assert newSocket != null;
-			executors.submit(new ServerThread(newSocket, textArea));
-			log.debug("新建服务线程");
+			new Thread(new ServerThread(newSocket, textArea)).start();
 		}
 	}
 
@@ -56,7 +49,6 @@ public class ServerAcceptor extends Thread {
 	public void interrupt() {
 		super.interrupt();
 		threadMap.clear();
-		this.executors.shutdown();
 		log.debug("服务端停止成功");
 	}
 
@@ -77,7 +69,6 @@ public class ServerAcceptor extends Thread {
 		for (Map.Entry<String, ServerThread> entry : threadMap.entrySet()) {
 			if (entry.getValue().equals(thread)){
 				threadMap.remove(entry.getKey());
-				System.out.println("移除服务线程 => " + entry.getKey());
 				break;
 			}
 		}

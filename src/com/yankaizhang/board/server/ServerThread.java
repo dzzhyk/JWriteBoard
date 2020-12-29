@@ -20,37 +20,64 @@ public class ServerThread implements Runnable {
 	private ObjectOutputStream objOut = null;
 	private ObjectInputStream objIn = null;
 	JTextArea textArea = null;
+	private final String clientName;
 
 	public ServerThread(Socket src, JTextArea textArea) {
+		String clientName1;
 		this.socket = src;
 		this.textArea = textArea;
-		String clientName = "";
+		clientName1 = "";
 		try {
-			//获得客户端的名字
+			// 获得客户端的名字
 			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			clientName = in.readLine();
+			clientName1 = in.readLine();
 
 		} catch(IOException e) {
 			e.printStackTrace();
+			try {
+				disConnect();
+			} catch (IOException ioException) {
+
+			}
 		}
 
-		ServerAcceptor.registerThread(clientName, this);
-		ServerAcceptor.showServerMsg("\n [新连接] ip: " + socket.getInetAddress() + " user: " + clientName);
-		log.debug("\n [新连接] ip: " + socket.getInetAddress() + " user: " + clientName);
+		clientName = clientName1;
+		try {
+			ServerAcceptor.registerThread(clientName, this);
+			ServerAcceptor.showServerMsg("\n [新连接] 客户端ip: " + socket.getInetAddress().getHostAddress() + " 客户端user: " + clientName);
+			log.debug("[新连接] 客户端ip: " + socket.getInetAddress().getHostAddress() + " 客户端user: " + clientName);
+		}catch (RuntimeException re){
+			try {
+				disConnect();
+			}catch (IOException e){
+
+			}
+		}
 	}
 
 	@Override
 	public void run() {
 
-		// 主要对象流的创建顺序
-		try {
-			objIn = new ObjectInputStream(socket.getInputStream());
-			objOut = new ObjectOutputStream(socket.getOutputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (this.socket == null){
 			return;
 		}
 
+		// 主要对象流的创建顺序
+		try {
+
+			objIn = new ObjectInputStream(socket.getInputStream());
+			objOut = new ObjectOutputStream(socket.getOutputStream());
+
+		} catch (IOException e) {
+			try {
+				disConnect();
+				return;
+			}catch (IOException e1){
+				return;
+			}
+		}
+
+		log.debug("开始监听 : " + this.clientName);
 		// 监听是否有数据传入
 		while(true) {
 			try {
@@ -59,14 +86,17 @@ public class ServerThread implements Runnable {
 				sendClientMsg(shape, this);
 			} catch(ClassNotFoundException e) {
 				e.printStackTrace();
-				break;
 			} catch(IOException e) {
-				ServerAcceptor.removeThread(this);
-				ServerAcceptor.showServerMsg("\n [断开连接] user: "+ Thread.currentThread().getName() +", ip: " + this.socket.getInetAddress());
-				log.debug("\n [断开连接] user: "+ Thread.currentThread().getName() +", ip: " + this.socket.getInetAddress());
-				break;
+				try {
+					disConnect();
+					break;
+				} catch (IOException ioException) {
+					ioException.printStackTrace();
+					break;
+				}
 			}
 		}
+		log.debug("终止监听 : " + this.clientName);
 	}
 
 	/**
@@ -78,5 +108,15 @@ public class ServerThread implements Runnable {
 
 	public ObjectOutputStream getObjOut() {
 		return objOut;
+	}
+
+	private void disConnect() throws IOException {
+		if (objIn != null && !socket.isClosed()) objIn.close();
+		if (objOut != null && !socket.isClosed()) objOut.close();
+		if (this.socket != null && !socket.isClosed()) this.socket.close();
+		ServerAcceptor.removeThread(this);
+		ServerAcceptor.showServerMsg("\n [断开连接] 客户端user: "+ Thread.currentThread().getName() +", ip: " + this.socket.getInetAddress());
+//		ServerAcceptor.broadcastMsg();
+		log.debug("[断开连接] 客户端user: "+ Thread.currentThread().getName() +", ip: " + this.socket.getInetAddress());
 	}
 }

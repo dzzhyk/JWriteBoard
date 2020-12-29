@@ -3,6 +3,7 @@ package com.yankaizhang.board.client;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -28,55 +29,48 @@ public class ClientThread extends Thread {
 		assert canvas != null;
 		try {
 			this.socket = new Socket(address, port);
+
 			PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
 			out.println(canvas.getUserName());
-			out.flush();
-
-			objOut = new ObjectOutputStream(socket.getOutputStream());
-			objIn = new ObjectInputStream(socket.getInputStream());
 
 			mainCanvas.setOnline(true);
 			log.debug("连接服务器成功 : userName : " + canvas.getUserName());
 
 		}catch(IOException e) {
 			JOptionPane.showMessageDialog(null, "服务器连接错误", "连接错误", JOptionPane.ERROR_MESSAGE);
-			try {
-				if (this.socket != null){
-					this.socket.close();
-				}
-				mainCanvas.setOnline(false);
-			} catch (IOException ioException) {
-				ioException.printStackTrace();
-			}
+			mainCanvas.getToolBar().manageConnection(false);
 		}
 	}
 
 
 	@Override
 	public void run() {
+		if (this.socket == null){
+			return;
+		}
+
+		try {
+			objOut = new ObjectOutputStream(socket.getOutputStream());
+			objIn = new ObjectInputStream(socket.getInputStream());
+//			mainCanvas.sendTextMessage(mainCanvas.getUserName() + " 已登录");
+		} catch (IOException e) {
+			this.interrupt();
+		}
+
 		while (true) {
 			try {
 				if (this.objIn == null){
 					log.debug("对象输入流为Null");
-					break;
+					throw new IOException("对象输入流为Null");
 				}
-				if (this.socket.isClosed()){
-					break;
+				if (this.socket == null || this.socket.isClosed()){
+					throw new IOException("Broken Pipe");
 				}
 				MyShape shape = (MyShape) objIn.readObject();
 				mainCanvas.getDataAndRepaint(shape);
-				log.debug("收到新内容，重新绘制");
 			}catch(ClassNotFoundException | IOException e) {
-				try {
-					if (this.socket != null){
-						this.socket.close();
-					}
-					mainCanvas.setOnline(false);
-					break;
-				} catch (IOException ioException) {
-					ioException.printStackTrace();
-					break;
-				}
+				mainCanvas.getToolBar().manageConnection(false);
+				break;
 			}
 		}
 	}
@@ -88,15 +82,8 @@ public class ClientThread extends Thread {
 	public void sendClientMsg(Object msg) {
 		try {
 			objOut.writeObject(msg);
-			log.debug("发送内容");
 		}catch(IOException e) {
-			e.printStackTrace();
-			try {
-				socket.close();
-			} catch (IOException ioException) {
-				ioException.printStackTrace();
-			}
-
+			mainCanvas.getToolBar().manageConnection(false);
 		}
 	}
 
@@ -104,10 +91,11 @@ public class ClientThread extends Thread {
 	public void interrupt() {
 		super.interrupt();
 		try {
-			objOut.close();
-			objIn.close();
-			socket.close();
+			if (objIn != null && !socket.isClosed()) objIn.close();
+			if (objOut != null && !socket.isClosed()) objOut.close();
+			if (this.socket != null && !socket.isClosed()) this.socket.close();
 			mainCanvas.setOnline(false);
+			log.debug("断开远程连接");
 		}catch (IOException e){
 			e.printStackTrace();
 		}
