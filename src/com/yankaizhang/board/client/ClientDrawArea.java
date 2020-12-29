@@ -199,22 +199,16 @@ public class ClientDrawArea extends JPanel {
 	 * 当背景色或者前景色改变时调用
 	 */
 	public void RepaintType(Color background, Color front) {
-		shapes.add(tempShape.deepClone());
-		if(mainCanvas.isOnline()){
-			mainCanvas.sendObjectMessage(tempShape);
-		}
-		tempShape.reset();
 		if(background != null) {
 			backColor = background;
 			tempShape.backColor = background;
 			tempShape.type = 7;
 			shapes.add(tempShape.deepClone());
 			if(mainCanvas.isOnline()){
-				mainCanvas.sendObjectMessage(tempShape);
+				mainCanvas.sendObjectMessage(tempShape.deepClone());
 			}
 			repaint();
 		}
-		tempShape.reset();
 		if(front != null){
 			tempShape.fontColor = front;
 		}
