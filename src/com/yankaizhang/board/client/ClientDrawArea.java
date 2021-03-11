@@ -176,7 +176,7 @@ public class ClientDrawArea extends JPanel {
 
 		// 如果绘图完成，储存图形并向服务器发送
 		MyShape cloneShape = tempShape.deepClone();
-		if (isFinish && tempShape.type <= 4 && tempShape.type >= 0 || tempShape.type == 5) {
+		if ((isFinish && tempShape.type <= 4 && tempShape.type >= 0) || tempShape.type == 5) {
 			shapes.add(cloneShape);
 			if(mainCanvas.isOnline()){
 				mainCanvas.sendObjectMessage(cloneShape);
